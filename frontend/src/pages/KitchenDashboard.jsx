@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ChefHat, ListTodo, Plus, Trash2, Edit3, Power, Flame, Calendar, IndianRupee } from 'lucide-react';
+import { ChefHat, ListTodo, Plus, Trash2, Edit3, Power, Flame, Calendar, IndianRupee, ImagePlus, X } from 'lucide-react';
 
 export default function KitchenDashboard() {
   const [activeTab, setActiveTab] = useState('queue'); // queue, manage_menu
@@ -21,6 +21,8 @@ export default function KitchenDashboard() {
     available: true,
     image: ''
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   useEffect(() => {
     fetchOrdersQueue();
@@ -88,8 +90,22 @@ export default function KitchenDashboard() {
 
   // CRUD operations
   const handleFormChange = (e) => {
+    if (e.target.name === 'imageFile') {
+      const file = e.target.files[0];
+      if (file) {
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+      }
+      return;
+    }
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setMenuForm({ ...menuForm, [e.target.name]: value });
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setMenuForm({ ...menuForm, image: '' });
   };
 
   const handleEditClick = (item) => {
@@ -104,6 +120,8 @@ export default function KitchenDashboard() {
       available: item.available,
       image: item.image
     });
+    setImageFile(null);
+    setImagePreview(item.image || '');
     setModalOpen(true);
   };
 
@@ -119,6 +137,8 @@ export default function KitchenDashboard() {
       available: true,
       image: ''
     });
+    setImageFile(null);
+    setImagePreview('');
     setModalOpen(true);
   };
 
@@ -137,16 +157,33 @@ export default function KitchenDashboard() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Build FormData for multipart upload
+      const formData = new FormData();
+      formData.append('title', menuForm.title);
+      formData.append('description', menuForm.description);
+      formData.append('price', menuForm.price);
+      formData.append('category', menuForm.category);
+      formData.append('day', menuForm.day);
+      formData.append('type', menuForm.type);
+      formData.append('available', menuForm.available);
+
+      // Attach file if selected, otherwise send existing image URL
+      if (imageFile) {
+        formData.append('image', imageFile);
+      } else if (menuForm.image) {
+        formData.append('image', menuForm.image);
+      }
+
+      const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+
       if (editingItem) {
-        // Update
-        const res = await axios.put(`/menu/${editingItem._id}`, menuForm);
+        const res = await axios.put(`/menu/${editingItem._id}`, formData, config);
         if (res.data.success) {
           fetchKitchenMenu();
           setModalOpen(false);
         }
       } else {
-        // Create
-        const res = await axios.post('/menu', menuForm);
+        const res = await axios.post('/menu', formData, config);
         if (res.data.success) {
           fetchKitchenMenu();
           setModalOpen(false);
@@ -603,15 +640,41 @@ export default function KitchenDashboard() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider pl-1">Image URL</label>
-                <input
-                  type="text"
-                  name="image"
-                  value={menuForm.image}
-                  onChange={handleFormChange}
-                  className="w-full text-xs font-semibold px-3 py-3 border border-slate-200 rounded-xl focus:border-brand-500 focus:outline-none"
-                  placeholder="https://images.unsplash.com/photo-..."
-                />
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider pl-1">Dish Photo</label>
+                
+                {/* Image Preview */}
+                {imagePreview && (
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                    <img
+                      src={imagePreview}
+                      alt="Dish preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 bg-white/90 hover:bg-white text-slate-600 hover:text-rose-600 p-1.5 rounded-full shadow-md transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Upload Input */}
+                <label className="flex flex-col items-center justify-center gap-2 w-full py-4 px-3 border-2 border-dashed border-slate-200 hover:border-brand-400 rounded-xl cursor-pointer bg-slate-50/50 hover:bg-brand-50/30 transition-all group">
+                  <ImagePlus className="h-6 w-6 text-slate-300 group-hover:text-brand-500 transition-colors" />
+                  <span className="text-[11px] font-semibold text-slate-400 group-hover:text-brand-600 transition-colors">
+                    {imageFile ? imageFile.name : 'Click to upload dish photo'}
+                  </span>
+                  <span className="text-[9px] text-slate-300">PNG, JPG, WEBP up to 5MB</span>
+                  <input
+                    type="file"
+                    name="imageFile"
+                    accept="image/*"
+                    onChange={handleFormChange}
+                    className="hidden"
+                  />
+                </label>
               </div>
 
               <div className="flex items-center gap-2 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
