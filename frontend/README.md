@@ -1,16 +1,65 @@
-# React + Vite
+# Community Dabba Manager - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the client-side single-page application (SPA) for the **Community Dabba Manager**. It provides responsive and user-friendly interfaces tailored to four user roles: Customers, Kitchen Staff, Delivery Partners, and Admins.
 
-Currently, two official plugins are available:
+## Tech Stack
+- **Framework**: React.js (built with Vite)
+- **Styling**: Tailwind CSS
+- **Routing**: React Router DOM (v7)
+- **State Management**: React Context API (`AuthContext`)
+- **API Client**: Axios (configured with global base URL and authorization interceptors)
+- **Icons**: Lucide React
+- **Data Visualization**: Recharts (for admin dashboard metrics)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features & Project Flow
 
-## React Compiler
+1. **Authentication & Authorization**:
+   - Integrated signup/login views with validation.
+   - Global `AuthContext` tracks the user session and token in `localStorage`.
+   - `ProtectedRoute` component restricts routes to authorized users and handles role-based routing.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. **Customer View**:
+   - View the active menu categorized by type and day of the week.
+   - Subscribe to recurring weekly/monthly meal packages.
+   - Place one-off orders and make secure card payments via Stripe.
+   - Submit feedback/reviews for meals.
+   - View in-app notifications.
 
-## Expanding the ESLint configuration
+3. **Kitchen View**:
+   - Manage the digital menu (Add new dishes, Edit existing ones, and Delete items).
+   - Upload dish images directly using drag-and-drop / file selector input, which streams images directly to Cloudinary.
+   - Toggle meal availability in real-time.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+4. **Delivery View**:
+   - Access lists of pending and in-transit orders.
+   - Interactive updates to change statuses from preparing, dispatched, to delivered.
+
+5. **Admin View**:
+   - High-level metric cards showing revenue, orders, subscriptions, and active users.
+   - Interactive charts built with `recharts` showing subscription distributions and sales trends.
+   - Manage users, subscriptions, orders, and review feedback.
+
+## Setup Instructions
+
+### Prerequisites
+- Node.js installed
+
+### Steps
+1. Navigate to the `frontend` folder:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Configure Backend Base URL:
+   - Ensure the server URL in `src/context/AuthContext.jsx` (specifically `axios.defaults.baseURL`) matches your running backend instance (e.g. `http://localhost:5000/api` or production URL).
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+5. Build for production (optional):
+   ```bash
+   npm run build
+   ```
