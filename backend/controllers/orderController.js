@@ -51,7 +51,7 @@ const createOrder = async (req, res) => {
 
     if (paymentMethod !== 'Cash') {
       const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-      const origin = req.body.origin || 'http://localhost:5173';
+      const origin = req.body.origin || 'https://community-dabba.onrender.com';
       const lineItems = orderItems.map(item => ({
         price_data: {
           currency: 'inr',

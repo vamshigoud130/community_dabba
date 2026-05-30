@@ -9,8 +9,24 @@ dotenv.config();
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  'https://community-dabba.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:5000'
+];
+
 app.use(cors({
-  origin: "*"
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Allow all for now; tighten later if needed
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 

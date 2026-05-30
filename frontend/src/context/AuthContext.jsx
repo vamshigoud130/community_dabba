@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Configure global API base URL
-  axios.defaults.baseURL = 'http://localhost:5000/api';
+  axios.defaults.baseURL = 'https://community-dabba.onrender.com/api';
 
   useEffect(() => {
     if (token) {

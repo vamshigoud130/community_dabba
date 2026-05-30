@@ -39,7 +39,7 @@ const createSubscription = async (req, res) => {
     });
 
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const origin = req.body.origin || 'http://localhost:5173';
+    const origin = req.body.origin || 'https://community-dabba.onrender.com';
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
