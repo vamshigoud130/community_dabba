@@ -10,6 +10,7 @@ const app = express();
 
 // Middleware
 const allowedOrigins = [
+  'https://community-dabba.vercel.app',
   'https://community-dabba.onrender.com',
   'http://localhost:5173',
   'http://localhost:5000'
