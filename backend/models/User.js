@@ -34,6 +34,18 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  otpCode: {
+    type: String,
+    default: null
+  },
+  otpExpires: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -41,9 +53,9 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Pre-save hook to encrypt password
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    next();
+    return;
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);

@@ -22,20 +22,34 @@ const verifySession = async (req, res) => {
 
     if (session.payment_status === 'paid') {
       if (type === 'order') {
-        const order = await Order.findById(id);
+        const order = await Order.findById(id).populate('userId', 'name email');
         if (!order) {
           return res.status(404).json({ success: false, message: 'Order not found' });
         }
         order.paymentStatus = 'Paid';
         await order.save();
+
+        // Send Email confirmation
+        const { sendOrderPlacedEmail } = require('../config/emailService');
+        if (order.userId && order.userId.email) {
+          sendOrderPlacedEmail(order.userId.email, order.userId.name, order).catch(err => console.error('Error sending order confirmation email:', err));
+        }
+
         return res.json({ success: true, message: 'Order payment verified successfully', data: order });
       } else if (type === 'subscription') {
-        const subscription = await Subscription.findById(id);
+        const subscription = await Subscription.findById(id).populate('userId', 'name email');
         if (!subscription) {
           return res.status(404).json({ success: false, message: 'Subscription not found' });
         }
         subscription.status = 'Active';
         await subscription.save();
+
+        // Send Email confirmation
+        const { sendSubscriptionEmail } = require('../config/emailService');
+        if (subscription.userId && subscription.userId.email) {
+          sendSubscriptionEmail(subscription.userId.email, subscription.userId.name, subscription).catch(err => console.error('Error sending subscription confirmation email:', err));
+        }
+
         return res.json({ success: true, message: 'Subscription payment verified successfully', data: subscription });
       } else {
         return res.status(400).json({ success: false, message: 'Invalid payment verification type' });

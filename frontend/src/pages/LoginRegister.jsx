@@ -4,13 +4,15 @@ import { AuthContext } from '../context/AuthContext';
 import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff, Shield } from 'lucide-react';
 
 export default function LoginRegister() {
-  const { login, register } = useContext(AuthContext);
+  const { login, register, verifyOTP } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isLoginTab, setIsLoginTab] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -49,6 +51,9 @@ export default function LoginRegister() {
         setTimeout(() => {
           navigate(getDashboardPath(res.role));
         }, 1200);
+      } else if (res.requiresVerification) {
+        setSuccessMsg(res.message);
+        setShowOTPVerification(true);
       } else {
         setErrorMsg(res.message);
       }
@@ -67,16 +72,119 @@ export default function LoginRegister() {
         formData.address
       );
       if (res.success) {
-        setSuccessMsg('Registration successful! Redirecting...');
-        setTimeout(() => {
-          navigate(getDashboardPath(res.role));
-        }, 1200);
+        if (res.requiresVerification) {
+          setSuccessMsg(res.message);
+          setShowOTPVerification(true);
+        } else {
+          setSuccessMsg('Registration successful! Redirecting...');
+          setTimeout(() => {
+            navigate(getDashboardPath(res.role));
+          }, 1200);
+        }
       } else {
         setErrorMsg(res.message);
       }
     }
     setLoading(false);
   };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    const getDashboardPath = (role) => {
+      switch (role) {
+        case 'admin': return '/admin';
+        case 'kitchen': return '/kitchen';
+        case 'delivery': return '/delivery';
+        default: return '/customer';
+      }
+    };
+
+    const res = await verifyOTP(formData.email, otpCode);
+    if (res && res.success) {
+      setSuccessMsg('Email verified and logged in successfully! Redirecting...');
+      setTimeout(() => {
+        navigate(getDashboardPath(res.role));
+      }, 1200);
+    } else {
+      setErrorMsg(res ? res.message : 'Verification failed.');
+    }
+    setLoading(false);
+  };
+
+  if (showOTPVerification) {
+    return (
+      <div className="min-h-[calc(100vh-80px)] flex flex-col justify-center items-center py-12 px-6 bg-slate-50 relative overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-200/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl" style={{ animationDelay: '2s' }}></div>
+
+        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden z-10 p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-black text-slate-950">Verify Your Email</h2>
+            <p className="text-slate-500 text-sm mt-1">
+              Please enter the 6-digit OTP code sent to <strong className="text-slate-700">{formData.email}</strong>.
+            </p>
+          </div>
+
+          {errorMsg && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-700 text-sm font-bold rounded-2xl flex items-center gap-2">
+              <span className="bg-rose-100 p-1 rounded-full text-xs">⚠️</span>
+              {errorMsg}
+            </div>
+          )}
+          {successMsg && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-100 text-green-700 text-sm font-bold rounded-2xl flex items-center gap-2">
+              <span className="bg-green-100 p-1 rounded-full text-xs">✔</span>
+              {successMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleVerifyOTP} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-slate-700 text-xs font-bold uppercase tracking-wider pl-1 text-center">One-Time Password (OTP)</label>
+              <input
+                type="text"
+                name="otp"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="000000"
+                className="w-full py-4 rounded-2xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none text-center text-2xl font-black tracking-[0.75em] text-slate-800 transition-all"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || otpCode.length !== 6}
+              className="w-full bg-brand-500 hover:bg-brand-600 text-white font-extrabold py-4 rounded-2xl transition-all duration-300 shadow-md shadow-brand-500/10 hover:shadow-brand-500/25 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                'Verify & Login'
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowOTPVerification(false);
+                setErrorMsg('');
+                setSuccessMsg('');
+              }}
+              className="text-slate-500 hover:text-slate-800 text-sm font-bold text-center mt-2 transition-colors"
+            >
+              ← Back to registration / login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-80px)] flex flex-col justify-center items-center py-12 px-6 bg-slate-50 relative overflow-hidden">

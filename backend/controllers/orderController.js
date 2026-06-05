@@ -77,6 +77,10 @@ const createOrder = async (req, res) => {
       return res.status(201).json({ success: true, data: order, stripeSessionUrl: session.url });
     }
 
+    // Send email for Cash on Delivery orders
+    const { sendOrderPlacedEmail } = require('../config/emailService');
+    sendOrderPlacedEmail(req.user.email, req.user.name, order).catch(err => console.error('Error sending COD email:', err));
+
     res.status(201).json({ success: true, data: order });
   } catch (error) {
     console.error('Create Order Error:', error);
@@ -152,13 +156,10 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// @desc    Update order status
-// @route   PUT /api/orders/:id/status
-// @access  Private (Kitchen, Delivery, Admin)
 const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('userId', 'name email');
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
@@ -178,6 +179,7 @@ const updateOrderStatus = async (req, res) => {
       }
     }
 
+    const previousStatus = order.status;
     order.status = status;
     
     if (status === 'Delivered') {
@@ -186,8 +188,13 @@ const updateOrderStatus = async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // Trigger Notification for delivery agents if order status is changed to 'Out for Delivery'
-    if (status === 'Out for Delivery') {
+    // Trigger Notification & Email if order status changes
+    const { sendOutOfDeliveryEmail, sendOrderDeliveredEmail } = require('../config/emailService');
+    
+    if (status === 'Out for Delivery' && previousStatus !== 'Out for Delivery') {
+      if (order.userId && order.userId.email) {
+        sendOutOfDeliveryEmail(order.userId.email, order.userId.name, order._id).catch(err => console.error('Error sending out of delivery email:', err));
+      }
       try {
         await Notification.create({
           title: 'Order Ready for Delivery',
@@ -197,6 +204,10 @@ const updateOrderStatus = async (req, res) => {
         });
       } catch (err) {
         console.error('Error creating notification:', err);
+      }
+    } else if (status === 'Delivered' && previousStatus !== 'Delivered') {
+      if (order.userId && order.userId.email) {
+        sendOrderDeliveredEmail(order.userId.email, order.userId.name, order._id).catch(err => console.error('Error sending delivered email:', err));
       }
     }
     
@@ -211,7 +222,7 @@ const updateOrderStatus = async (req, res) => {
 // @access  Private (Delivery, Admin)
 const claimOrder = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('userId', 'name email');
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
@@ -221,10 +232,18 @@ const claimOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Order already claimed by another delivery person' });
     }
 
+    const previousStatus = order.status;
     order.deliveryPerson = req.user._id;
     order.status = 'Out for Delivery'; // transition to out for delivery upon pickup claim
     
     const updatedOrder = await order.save();
+
+    if (previousStatus !== 'Out for Delivery') {
+      const { sendOutOfDeliveryEmail } = require('../config/emailService');
+      if (order.userId && order.userId.email) {
+        sendOutOfDeliveryEmail(order.userId.email, order.userId.name, order._id).catch(err => console.error('Error sending out of delivery email:', err));
+      }
+    }
 
     res.json({ success: true, data: updatedOrder });
   } catch (error) {

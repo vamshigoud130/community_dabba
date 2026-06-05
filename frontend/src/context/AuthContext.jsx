@@ -9,7 +9,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Configure global API base URL
-  axios.defaults.baseURL = 'https://community-dabba.onrender.com/api';
+  axios.defaults.baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000/api'
+    : 'https://community-dabba.onrender.com/api';
 
   useEffect(() => {
     if (token) {
@@ -49,6 +51,13 @@ export const AuthProvider = ({ children }) => {
         return { success: true, role: userData.role };
       }
     } catch (err) {
+      if (err.response?.data?.requiresVerification) {
+        return {
+          success: false,
+          requiresVerification: true,
+          message: err.response.data.message
+        };
+      }
       return {
         success: false,
         message: err.response?.data?.message || 'Login failed. Please check credentials.'
@@ -60,6 +69,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await axios.post('/auth/register', { name, email, password, role, phone, address });
       if (res.data.success) {
+        if (res.data.requiresVerification) {
+          return { success: true, requiresVerification: true, message: res.data.message };
+        }
         const { token: userToken, ...userData } = res.data.data;
         localStorage.setItem('token', userToken);
         setToken(userToken);
@@ -74,6 +86,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const verifyOTP = async (email, otpCode) => {
+    try {
+      const res = await axios.post('/auth/verify-otp', { email, otpCode });
+      if (res.data.success) {
+        const { token: userToken, ...userData } = res.data.data;
+        localStorage.setItem('token', userToken);
+        setToken(userToken);
+        setUser(userData);
+        return { success: true, role: userData.role };
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || 'OTP verification failed.'
+      };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken('');
@@ -82,7 +112,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, setUser }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, verifyOTP, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
