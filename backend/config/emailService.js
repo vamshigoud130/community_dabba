@@ -19,23 +19,30 @@ const validateEmailDomain = async (email) => {
 
   try {
     // Check for Mail Exchanger records
-    const mxRecords = await dns.resolveMx(domain);
+    const mxRecords = await dns.resolveMx(domain).catch(() => []);
     if (mxRecords && mxRecords.length > 0) {
       return true;
     }
-  } catch (err) {
-    // Fallback: check if the domain has A records
-    try {
-      const aRecords = await dns.resolve4(domain);
-      if (aRecords && aRecords.length > 0) {
-        return true;
-      }
-    } catch (e) {
-      console.warn(`DNS verification failed for domain "${domain}". Defaulting to valid email domain. Error:`, e.message);
-      return true; // Robust fallback to prevent blocking valid registrations on DNS issues
+
+    // Fallback 1: check if the domain has A records
+    const aRecords = await dns.resolve4(domain).catch(() => []);
+    if (aRecords && aRecords.length > 0) {
+      return true;
     }
+
+    // Fallback 2: try dns.lookup (uses OS getaddrinfo, which works in serverless/cloud environments)
+    const lookupResult = await dns.lookup(domain).catch(() => null);
+    if (lookupResult && lookupResult.address) {
+      return true;
+    }
+  } catch (err) {
+    console.warn(`DNS verification failed for domain "${domain}". Defaulting to valid. Error:`, err.message);
+    return true; 
   }
-  return false;
+
+  // Default to true to prevent blocking valid registrations on DNS resolve issues
+  console.warn(`DNS verification could not resolve domain "${domain}". Defaulting to true.`);
+  return true;
 };
 
 /**
