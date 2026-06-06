@@ -109,7 +109,69 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
     }
   }
 
-  // 2. Try sending via Brevo if API key is provided (HTTP API is preferred in cloud/serverless as it bypasses SMTP port blocks)
+  // 2. Try sending via Elastic Email if API key is provided
+  const elasticEmailApiKey = process.env.ELASTIC_EMAIL_API_KEY;
+  if (elasticEmailApiKey) {
+    try {
+      await new Promise((resolve, reject) => {
+        const postData = JSON.stringify({
+          Recipients: {
+            To: [toEmail]
+          },
+          Content: {
+            Body: [
+              {
+                ContentType: "HTML",
+                Charset: "utf-8",
+                Content: htmlContent
+              }
+            ],
+            From: senderEmail,
+            Subject: subject
+          }
+        });
+
+        const options = {
+          hostname: 'api.elasticemail.com',
+          port: 443,
+          path: '/v4/emails/transactional',
+          method: 'POST',
+          headers: {
+            'X-ElasticEmail-ApiKey': elasticEmailApiKey,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          }
+        };
+
+        const req = https.request(options, (res) => {
+          let responseBody = '';
+          res.on('data', (chunk) => { responseBody += chunk; });
+          res.on('end', () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              console.log(`✉️ Email successfully sent via Elastic Email to ${toEmail}. Status: ${res.statusCode}`);
+              resolve();
+            } else {
+              console.error(`❌ Elastic Email API responded with status ${res.statusCode}: ${responseBody}`);
+              reject(new Error(`Elastic Email responded with status ${res.statusCode}`));
+            }
+          });
+        });
+
+        req.on('error', (error) => {
+          console.error('❌ Error sending email via Elastic Email:', error.message);
+          reject(error);
+        });
+
+        req.write(postData);
+        req.end();
+      });
+      return; // Exit if Elastic Email sent successfully
+    } catch (error) {
+      console.error('❌ Elastic Email sending failed, attempting Brevo fallback. Error:', error.message);
+    }
+  }
+
+  // 3. Try sending via Brevo if API key is provided (HTTP API is preferred in cloud/serverless as it bypasses SMTP port blocks)
   const apiKey = process.env.BREVO_API_KEY;
   if (apiKey) {
     try {
