@@ -1,5 +1,6 @@
 const dns = require('dns').promises;
 const nodemailer = require('nodemailer');
+const https = require('https');
 
 /**
  * Validates if the email domain actually exists and has mail exchange (MX) or address (A) records.
@@ -60,31 +61,52 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
   const apiKey = process.env.BREVO_API_KEY;
   if (apiKey) {
     try {
-      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'api-key': apiKey,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
+      await new Promise((resolve, reject) => {
+        const postData = JSON.stringify({
           sender: { name: senderName, email: senderEmail },
           to: [{ email: toEmail, name: toName }],
           subject: subject,
           htmlContent: htmlContent
-        })
-      });
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`✉️ Email successfully sent via Brevo to ${toEmail}. Message ID:`, data.messageId);
-        return;
-      } else {
-        const errText = await response.text();
-        console.error(`❌ Brevo API responded with status ${response.status}: ${errText}`);
-      }
+        const options = {
+          hostname: 'api.brevo.com',
+          port: 443,
+          path: '/v3/smtp/email',
+          method: 'POST',
+          headers: {
+            'api-key': apiKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          }
+        };
+
+        const req = https.request(options, (res) => {
+          let responseBody = '';
+          res.on('data', (chunk) => { responseBody += chunk; });
+          res.on('end', () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              console.log(`✉️ Email successfully sent via Brevo to ${toEmail}. Status: ${res.statusCode}`);
+              resolve();
+            } else {
+              console.error(`❌ Brevo API responded with status ${res.statusCode}: ${responseBody}`);
+              reject(new Error(`Brevo responded with status ${res.statusCode}`));
+            }
+          });
+        });
+
+        req.on('error', (error) => {
+          console.error('❌ Error sending email via Brevo:', error.message);
+          reject(error);
+        });
+
+        req.write(postData);
+        req.end();
+      });
+      return;
     } catch (error) {
-      console.error('❌ Error sending email via Brevo:', error.message);
+      console.error('❌ Brevo sending failed, attempting SMTP fallback. Error:', error.message);
     }
   }
 
