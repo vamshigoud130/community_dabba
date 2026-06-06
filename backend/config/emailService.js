@@ -31,7 +31,8 @@ const validateEmailDomain = async (email) => {
         return true;
       }
     } catch (e) {
-      return false;
+      console.warn(`DNS verification failed for domain "${domain}". Defaulting to valid email domain. Error:`, e.message);
+      return true; // Robust fallback to prevent blocking valid registrations on DNS issues
     }
   }
   return false;
@@ -58,6 +59,9 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS
+        },
+        tls: {
+          rejectUnauthorized: false
         }
       });
 

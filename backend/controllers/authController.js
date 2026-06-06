@@ -57,9 +57,13 @@ const registerUser = async (req, res) => {
     user.otpExpires = otpExpires;
     await user.save();
 
-    // Send OTP email asynchronously
+    // Send OTP email
     const { sendOTPEmail } = require('../config/emailService');
-    sendOTPEmail(user.email, user.name, otp).catch(err => console.error('Error triggering OTP email:', err));
+    try {
+      await sendOTPEmail(user.email, user.name, otp);
+    } catch (err) {
+      console.error('Error triggering OTP email:', err);
+    }
 
     res.status(200).json({
       success: true,
@@ -99,14 +103,18 @@ const loginUser = async (req, res) => {
       user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
       await user.save();
 
-      // Send OTP email asynchronously
+      // Send OTP email
       const { sendOTPEmail } = require('../config/emailService');
-      sendOTPEmail(user.email, user.name, otp).catch(err => console.error('Error triggering OTP email during login:', err));
+      try {
+        await sendOTPEmail(user.email, user.name, otp);
+      } catch (err) {
+        console.error('Error triggering OTP email during login:', err);
+      }
 
       return res.status(403).json({
         success: false,
         requiresVerification: true,
-        message: 'Account not verified. A new verification OTP code has  not been sent to your email.'
+        message: 'Account not verified. A new verification OTP code has been sent to your email.'
       });
     }
 
