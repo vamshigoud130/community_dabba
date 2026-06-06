@@ -56,36 +56,7 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
   const senderEmail = process.env.SENDER_EMAIL || 'noreply@communitydabba.com';
   const senderName = process.env.SENDER_NAME || 'Community Dabba';
 
-  // 1. Try sending via SMTP if credentials are provided
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587', 10),
-        secure: process.env.SMTP_PORT === '465',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        },
-        tls: {
-          rejectUnauthorized: false
-        }
-      });
-
-      const info = await transporter.sendMail({
-        from: `"${senderName}" <${senderEmail}>`,
-        to: `"${toName}" <${toEmail}>`,
-        subject: subject,
-        html: htmlContent
-      });
-      console.log(`✉️ Email successfully sent via SMTP to ${toEmail}. Message ID:`, info.messageId);
-      return;
-    } catch (smtpError) {
-      console.error('❌ Error sending email via SMTP:', smtpError.message);
-    }
-  }
-
-  // 2. Try sending via Brevo if API key is provided
+  // 1. Try sending via Brevo if API key is provided (HTTP API is preferred in cloud/serverless as it bypasses SMTP port blocks)
   const apiKey = process.env.BREVO_API_KEY;
   if (apiKey) {
     try {
@@ -114,6 +85,35 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
       }
     } catch (error) {
       console.error('❌ Error sending email via Brevo:', error.message);
+    }
+  }
+
+  // 2. Try sending via SMTP if credentials are provided
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: process.env.SMTP_PORT === '465',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+
+      const info = await transporter.sendMail({
+        from: `"${senderName}" <${senderEmail}>`,
+        to: `"${toName}" <${toEmail}>`,
+        subject: subject,
+        html: htmlContent
+      });
+      console.log(`✉️ Email successfully sent via SMTP to ${toEmail}. Message ID:`, info.messageId);
+      return;
+    } catch (smtpError) {
+      console.error('❌ Error sending email via SMTP:', smtpError.message);
     }
   }
 
