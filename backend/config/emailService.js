@@ -57,7 +57,59 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
   const senderEmail = process.env.SENDER_EMAIL || 'noreply@communitydabba.com';
   const senderName = process.env.SENDER_NAME || 'Community Dabba';
 
-  // 1. Try sending via Brevo if API key is provided (HTTP API is preferred in cloud/serverless as it bypasses SMTP port blocks)
+  // 1. Try sending via Resend if API key is provided
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      await new Promise((resolve, reject) => {
+        const postData = JSON.stringify({
+          from: `${senderName} <${process.env.RESEND_SENDER || 'onboarding@resend.dev'}>`,
+          to: toEmail,
+          subject: subject,
+          html: htmlContent
+        });
+
+        const options = {
+          hostname: 'api.resend.com',
+          port: 443,
+          path: '/emails',
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          }
+        };
+
+        const req = https.request(options, (res) => {
+          let responseBody = '';
+          res.on('data', (chunk) => { responseBody += chunk; });
+          res.on('end', () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              console.log(`✉️ Email successfully sent via Resend to ${toEmail}. Status: ${res.statusCode}`);
+              resolve();
+            } else {
+              console.error(`❌ Resend API responded with status ${res.statusCode}: ${responseBody}`);
+              reject(new Error(`Resend responded with status ${res.statusCode}`));
+            }
+          });
+        });
+
+        req.on('error', (error) => {
+          console.error('❌ Error sending email via Resend:', error.message);
+          reject(error);
+        });
+
+        req.write(postData);
+        req.end();
+      });
+      return; // Exit if Resend sent successfully
+    } catch (error) {
+      console.error('❌ Resend sending failed, attempting Brevo fallback. Error:', error.message);
+    }
+  }
+
+  // 2. Try sending via Brevo if API key is provided (HTTP API is preferred in cloud/serverless as it bypasses SMTP port blocks)
   const apiKey = process.env.BREVO_API_KEY;
   if (apiKey) {
     try {
