@@ -57,59 +57,7 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
   const senderEmail = process.env.SENDER_EMAIL || 'noreply@communitydabba.com';
   const senderName = process.env.SENDER_NAME || 'Community Dabba';
 
-  // 1. Try sending via Resend if API key is provided
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (resendApiKey) {
-    try {
-      await new Promise((resolve, reject) => {
-        const postData = JSON.stringify({
-          from: `${senderName} <${process.env.RESEND_SENDER || 'onboarding@resend.dev'}>`,
-          to: toEmail,
-          subject: subject,
-          html: htmlContent
-        });
-
-        const options = {
-          hostname: 'api.resend.com',
-          port: 443,
-          path: '/emails',
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(postData)
-          }
-        };
-
-        const req = https.request(options, (res) => {
-          let responseBody = '';
-          res.on('data', (chunk) => { responseBody += chunk; });
-          res.on('end', () => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-              console.log(`✉️ Email successfully sent via Resend to ${toEmail}. Status: ${res.statusCode}`);
-              resolve();
-            } else {
-              console.error(`❌ Resend API responded with status ${res.statusCode}: ${responseBody}`);
-              reject(new Error(`Resend responded with status ${res.statusCode}`));
-            }
-          });
-        });
-
-        req.on('error', (error) => {
-          console.error('❌ Error sending email via Resend:', error.message);
-          reject(error);
-        });
-
-        req.write(postData);
-        req.end();
-      });
-      return; // Exit if Resend sent successfully
-    } catch (error) {
-      console.error('❌ Resend sending failed, attempting Brevo fallback. Error:', error.message);
-    }
-  }
-
-  // 2. Try sending via Elastic Email if API key is provided
+  // 1. Try sending via Elastic Email if API key is provided
   const elasticEmailApiKey = process.env.ELASTIC_EMAIL_API_KEY;
   if (elasticEmailApiKey) {
     try {
@@ -167,94 +115,12 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
       });
       return; // Exit if Elastic Email sent successfully
     } catch (error) {
-      console.error('❌ Elastic Email sending failed, attempting Brevo fallback. Error:', error.message);
+      console.error('❌ Elastic Email sending failed. Error:', error.message);
     }
   }
 
-  // 3. Try sending via Brevo if API key is provided (HTTP API is preferred in cloud/serverless as it bypasses SMTP port blocks)
-  const apiKey = process.env.BREVO_API_KEY;
-  if (apiKey) {
-    try {
-      await new Promise((resolve, reject) => {
-        const postData = JSON.stringify({
-          sender: { name: senderName, email: senderEmail },
-          to: [{ email: toEmail, name: toName }],
-          subject: subject,
-          htmlContent: htmlContent
-        });
-
-        const options = {
-          hostname: 'api.brevo.com',
-          port: 443,
-          path: '/v3/smtp/email',
-          method: 'POST',
-          headers: {
-            'api-key': apiKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Content-Length': Buffer.byteLength(postData)
-          }
-        };
-
-        const req = https.request(options, (res) => {
-          let responseBody = '';
-          res.on('data', (chunk) => { responseBody += chunk; });
-          res.on('end', () => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-              console.log(`✉️ Email successfully sent via Brevo to ${toEmail}. Status: ${res.statusCode}`);
-              resolve();
-            } else {
-              console.error(`❌ Brevo API responded with status ${res.statusCode}: ${responseBody}`);
-              reject(new Error(`Brevo responded with status ${res.statusCode}`));
-            }
-          });
-        });
-
-        req.on('error', (error) => {
-          console.error('❌ Error sending email via Brevo:', error.message);
-          reject(error);
-        });
-
-        req.write(postData);
-        req.end();
-      });
-      return;
-    } catch (error) {
-      console.error('❌ Brevo sending failed, attempting SMTP fallback. Error:', error.message);
-    }
-  }
-
-  // 2. Try sending via SMTP if credentials are provided
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587', 10),
-        secure: process.env.SMTP_PORT === '465',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        },
-        tls: {
-          rejectUnauthorized: false
-        }
-      });
-
-      const info = await transporter.sendMail({
-        from: `"${senderName}" <${senderEmail}>`,
-        to: `"${toName}" <${toEmail}>`,
-        subject: subject,
-        html: htmlContent
-      });
-      console.log(`✉️ Email successfully sent via SMTP to ${toEmail}. Message ID:`, info.messageId);
-      return;
-    } catch (smtpError) {
-      console.error('❌ Error sending email via SMTP:', smtpError.message);
-    }
-  }
-
-  // 3. Fallback: Simulation (Always print OTP/email contents to console so development is unimpeded)
-  console.warn('⚠️ Email send simulated (no working SMTP or Brevo config).');
+  // 2. Fallback: Simulation (Always print OTP/email contents to console so development is unimpeded)
+  console.warn('⚠️ Email send simulated (no working Elastic Email config).');
   console.log('========================================================================');
   console.log(`[SIMULATED EMAIL]`);
   console.log(`To: ${toEmail} (${toName})`);
