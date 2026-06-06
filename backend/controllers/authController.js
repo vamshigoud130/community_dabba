@@ -106,7 +106,7 @@ const loginUser = async (req, res) => {
       return res.status(403).json({
         success: false,
         requiresVerification: true,
-        message: 'Account not verified. A new verification OTP code has been sent to your email.'
+        message: 'Account not verified. A new verification OTP code has  not been sent to your email.'
       });
     }
 
