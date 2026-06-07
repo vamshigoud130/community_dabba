@@ -119,8 +119,41 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
     }
   }
 
-  // 2. Fallback: Simulation (Always print OTP/email contents to console so development is unimpeded)
-  console.warn('⚠️ Email send simulated (no working Elastic Email config).');
+  // 2. Fallback: Try sending via Nodemailer SMTP if configured in .env
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = process.env.SMTP_PORT;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  if (smtpHost && smtpUser && smtpPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: parseInt(smtpPort) || 587,
+        secure: (parseInt(smtpPort) === 465),
+        auth: {
+          user: smtpUser,
+          pass: smtpPass
+        }
+      });
+
+      const mailOptions = {
+        from: `"${senderName}" <${smtpUser}>`,
+        to: toEmail,
+        subject: subject,
+        html: htmlContent
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`✉️ Email successfully sent via SMTP to ${toEmail}`);
+      return;
+    } catch (error) {
+      console.error('❌ Nodemailer SMTP sending failed. Error:', error.message);
+    }
+  }
+
+  // 3. Fallback: Simulation (Always print OTP/email contents to console so development is unimpeded)
+  console.warn('⚠️ Email send simulated (no working email config).');
   console.log('========================================================================');
   console.log(`[SIMULATED EMAIL]`);
   console.log(`To: ${toEmail} (${toName})`);
