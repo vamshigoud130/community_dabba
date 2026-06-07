@@ -8,42 +8,68 @@ const https = require('https');
  * @returns {Promise<boolean>}
  */
 const validateEmailDomain = async (email) => {
-  if (!email || typeof email !== 'string') return false;
+  if (!email || typeof email !== 'string') {
+    return { valid: false, reason: 'Please provide a valid email address.' };
+  }
   
-  // Basic Regex Check
+  // 1. Basic Regex Check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) return false;
+  if (!emailRegex.test(email)) {
+    return { valid: false, reason: 'Invalid email address format.' };
+  }
 
   const parts = email.split('@');
-  if (parts.length !== 2) return false;
-  const domain = parts[1].trim();
+  if (parts.length !== 2) {
+    return { valid: false, reason: 'Invalid email address format.' };
+  }
+  
+  const username = parts[0].trim().toLowerCase();
+  const domain = parts[1].trim().toLowerCase();
 
+  // 2. Block extremely short usernames (like 1@gmail.com, h@gmail.com)
+  if (username.length < 3) {
+    return { valid: false, reason: 'Registration failed: Email username must be at least 3 characters long.' };
+  }
+
+  // 3. Block generic test usernames (like test@gmail.com, admin@gmail.com, demo@...)
+  const blockedUsernames = ['test', 'demo', 'dummy', 'example', 'admin', 'user', 'guest', 'testing', 'temp'];
+  if (blockedUsernames.includes(username) || blockedUsernames.some(blocked => username.startsWith(blocked + '1') || username.startsWith(blocked + '_') || username === blocked)) {
+    return { valid: false, reason: 'Registration failed: Generic or test email addresses are not allowed.' };
+  }
+
+  // 4. Block common disposable/temporary email domains
+  const disposableDomains = ['mailinator.com', 'tempmail.com', '10minutemail.com', 'dispostable.com', 'yopmail.com', 'sharklasers.com', 'guerrillamail.com'];
+  if (disposableDomains.includes(domain)) {
+    return { valid: false, reason: 'Registration failed: Disposable/temporary email addresses are not allowed.' };
+  }
+
+  // 5. DNS record verification to check if domain exists and can receive mail
   try {
     // Check for Mail Exchanger records
     const mxRecords = await dns.resolveMx(domain).catch(() => []);
     if (mxRecords && mxRecords.length > 0) {
-      return true;
+      return { valid: true };
     }
 
     // Fallback 1: check if the domain has A records
     const aRecords = await dns.resolve4(domain).catch(() => []);
     if (aRecords && aRecords.length > 0) {
-      return true;
+      return { valid: true };
     }
 
-    // Fallback 2: try dns.lookup (uses OS getaddrinfo, which works in serverless/cloud environments)
+    // Fallback 2: try dns.lookup
     const lookupResult = await dns.lookup(domain).catch(() => null);
     if (lookupResult && lookupResult.address) {
-      return true;
+      return { valid: true };
     }
   } catch (err) {
     console.warn(`DNS verification failed for domain "${domain}". Defaulting to valid. Error:`, err.message);
-    return true; 
+    return { valid: true }; 
   }
 
-  // Default to true to prevent blocking valid registrations on DNS resolve issues
+  // Default to true to prevent blocking valid registrations on transient DNS resolve issues
   console.warn(`DNS verification could not resolve domain "${domain}". Defaulting to true.`);
-  return true;
+  return { valid: true };
 };
 
 /**

@@ -1,6 +1,5 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const Whitelist = require('../models/Whitelist');
 
 // Helper to sign JWT
 const generateToken = (id) => {
@@ -16,13 +15,11 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password, role, phone, address } = req.body;
 
-    // Check if email is whitelisted
-    const isWhitelisted = await Whitelist.findOne({ email: email.toLowerCase() });
-    if (!isWhitelisted) {
-      return res.status(403).json({
-        success: false,
-        message: 'Registration failed: This email is not pre-approved or invited.'
-      });
+    // Validate if the email actually passes quality checks (length, generic name, domain)
+    const { validateEmailDomain } = require('../config/emailService');
+    const validationResult = await validateEmailDomain(email);
+    if (!validationResult.valid) {
+      return res.status(400).json({ success: false, message: validationResult.reason });
     }
 
     // Check if user exists
@@ -94,18 +91,10 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    // Check if account is verified
+    // Check if account is verified (auto-verify on login)
     if (!user.isVerified) {
-      const isWhitelisted = await Whitelist.findOne({ email: email.toLowerCase() });
-      if (isWhitelisted) {
-        user.isVerified = true;
-        await user.save();
-      } else {
-        return res.status(403).json({
-          success: false,
-          message: 'Account not verified, and this email is not on the pre-approved whitelist.'
-        });
-      }
+      user.isVerified = true;
+      await user.save();
     }
 
     // Send login notification email asynchronously (disabled for whitelisting auth model)
