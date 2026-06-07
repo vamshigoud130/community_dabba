@@ -57,7 +57,68 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
   const senderEmail = process.env.SENDER_EMAIL || 'noreply@communitydabba.com';
   const senderName = process.env.SENDER_NAME || 'Community Dabba';
 
-  // 1. Try sending via Elastic Email if API key is provided
+  // 1. Try sending via Brevo API if API key is provided
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  if (brevoApiKey) {
+    try {
+      await new Promise((resolve, reject) => {
+        const postData = JSON.stringify({
+          sender: {
+            name: senderName,
+            email: senderEmail
+          },
+          to: [
+            {
+              email: toEmail,
+              name: toName || toEmail.split('@')[0]
+            }
+          ],
+          subject: subject,
+          htmlContent: htmlContent
+        });
+
+        const options = {
+          hostname: 'api.brevo.com',
+          port: 443,
+          path: '/v3/smtp/email',
+          method: 'POST',
+          headers: {
+            'api-key': brevoApiKey,
+            'Content-Type': 'application/json',
+            'accept': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          }
+        };
+
+        const req = https.request(options, (res) => {
+          let responseBody = '';
+          res.on('data', (chunk) => { responseBody += chunk; });
+          res.on('end', () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              console.log(`✉️ Email successfully sent via Brevo to ${toEmail}. Status: ${res.statusCode}`);
+              resolve();
+            } else {
+              console.error(`❌ Brevo API responded with status ${res.statusCode}: ${responseBody}`);
+              reject(new Error(`Brevo responded with status ${res.statusCode}`));
+            }
+          });
+        });
+
+        req.on('error', (error) => {
+          console.error('❌ Error sending email via Brevo:', error.message);
+          reject(error);
+        });
+
+        req.write(postData);
+        req.end();
+      });
+      return; // Exit if Brevo sent successfully
+    } catch (error) {
+      console.error('❌ Brevo sending failed. Error:', error.message);
+    }
+  }
+
+  // 2. Try sending via Elastic Email if API key is provided
   const elasticEmailApiKey = process.env.ELASTIC_EMAIL_API_KEY;
   if (elasticEmailApiKey) {
     try {
@@ -119,7 +180,7 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
     }
   }
 
-  // 2. Fallback: Try sending via Nodemailer SMTP if configured in .env
+  // 3. Fallback: Try sending via Nodemailer SMTP if configured in .env
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = process.env.SMTP_PORT;
   const smtpUser = process.env.SMTP_USER;
@@ -152,7 +213,7 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
     }
   }
 
-  // 3. Fallback: Simulation (Always print OTP/email contents to console so development is unimpeded)
+  // 4. Fallback: Simulation (Always print OTP/email contents to console so development is unimpeded)
   console.warn('⚠️ Email send simulated (no working email config).');
   console.log('========================================================================');
   console.log(`[SIMULATED EMAIL]`);
