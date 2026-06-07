@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const Whitelist = require('../models/Whitelist');
 
 // Helper to sign JWT
 const generateToken = (id) => {
@@ -15,6 +16,15 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password, role, phone, address } = req.body;
 
+    // Check if email is whitelisted
+    const isWhitelisted = await Whitelist.findOne({ email: email.toLowerCase() });
+    if (!isWhitelisted) {
+      return res.status(403).json({
+        success: false,
+        message: 'Registration failed: This email is not pre-approved or invited.'
+      });
+    }
+
     // Check if user exists
     let user = await User.findOne({ email });
     if (user) {
@@ -27,21 +37,11 @@ const registerUser = async (req, res) => {
       user.role = role || 'customer';
       user.phone = phone;
       user.address = address || '';
+      user.isVerified = true;
     }
-
-    // Validate if the email domain actually exists
-    const { validateEmailDomain } = require('../config/emailService');
-    const isDomainValid = await validateEmailDomain(email);
-    if (!isDomainValid) {
-      return res.status(400).json({ success: false, message: 'Registration failed: The email domain does not exist or cannot receive mail.' });
-    }
-
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     if (!user) {
-      // Create unverified user
+      // Create verified user directly
       user = new User({
         name,
         email,
@@ -49,26 +49,25 @@ const registerUser = async (req, res) => {
         role: role || 'customer', // customer, kitchen, delivery, admin
         phone,
         address: address || '',
-        isVerified: false
+        isVerified: true
       });
     }
 
-    user.otpCode = otp;
-    user.otpExpires = otpExpires;
     await user.save();
 
-    // Send OTP email
-    const { sendOTPEmail } = require('../config/emailService');
-    try {
-      await sendOTPEmail(user.email, user.name, otp);
-    } catch (err) {
-      console.error('Error triggering OTP email:', err);
-    }
-
-    res.status(200).json({
+    res.status(201).json({
       success: true,
-      requiresVerification: true,
-      message: 'OTP verification code sent to your email. Please verify to complete registration.'
+      requiresVerification: false,
+      message: 'Registration successful!',
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        address: user.address,
+        token: generateToken(user._id)
+      }
     });
   } catch (error) {
     console.error('Registration Error:', error);
@@ -97,30 +96,21 @@ const loginUser = async (req, res) => {
 
     // Check if account is verified
     if (!user.isVerified) {
-      // Generate a new OTP code
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      user.otpCode = otp;
-      user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      await user.save();
-
-      // Send OTP email
-      const { sendOTPEmail } = require('../config/emailService');
-      try {
-        await sendOTPEmail(user.email, user.name, otp);
-      } catch (err) {
-        console.error('Error triggering OTP email during login:', err);
+      const isWhitelisted = await Whitelist.findOne({ email: email.toLowerCase() });
+      if (isWhitelisted) {
+        user.isVerified = true;
+        await user.save();
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: 'Account not verified, and this email is not on the pre-approved whitelist.'
+        });
       }
-
-      return res.status(403).json({
-        success: false,
-        requiresVerification: true,
-        message: 'Account not verified. A new verification OTP code has been sent to your email.'
-      });
     }
 
-    // Send login notification email asynchronously
-    const { sendLoginEmail } = require('../config/emailService');
-    sendLoginEmail(user.email, user.name).catch(err => console.error('Error triggering login email:', err));
+    // Send login notification email asynchronously (disabled for whitelisting auth model)
+    // const { sendLoginEmail } = require('../config/emailService');
+    // sendLoginEmail(user.email, user.name).catch(err => console.error('Error triggering login email:', err));
 
     res.json({
       success: true,

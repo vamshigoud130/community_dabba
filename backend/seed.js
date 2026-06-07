@@ -4,8 +4,9 @@ const Menu = require('./models/Menu');
 const Order = require('./models/Order');
 const Subscription = require('./models/Subscription');
 const Feedback = require('./models/Feedback');
+const Whitelist = require('./models/Whitelist');
 
-const MONGO_URI = 'mongodb://localhost:27017/dabba_db';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/dabba_db';
 
 const seedData = async () => {
   try {
@@ -18,7 +19,23 @@ const seedData = async () => {
     await Order.deleteMany();
     await Subscription.deleteMany();
     await Feedback.deleteMany();
+    await Whitelist.deleteMany();
     console.log('Cleared existing collections.');
+
+    // Seed Whitelist
+    const whitelistedEmails = [
+      'chenagonivamshi@gmail.com',
+      'dimpuchenagoni@gmail.com',
+      'vamshi@gmail.com',
+      'aishwarya@gmail.com',
+      'cook@dabba.com',
+      'delivery@dabba.com',
+      'admin@dabba.com'
+    ];
+    for (const email of whitelistedEmails) {
+      await Whitelist.create({ email });
+    }
+    console.log(`Seeded ${whitelistedEmails.length} whitelisted emails successfully!`);
 
     // 1. Create Users
     const users = [
@@ -28,7 +45,8 @@ const seedData = async () => {
         password: 'password123',
         role: 'customer',
         phone: '9876543210',
-        address: 'H-No 4-12, PG Hostel, Madhapur, Hyderabad'
+        address: 'H-No 4-12, PG Hostel, Madhapur, Hyderabad',
+        isVerified: true
       },
       {
         name: 'Aishwarya Patel',
@@ -36,7 +54,8 @@ const seedData = async () => {
         password: 'password123',
         role: 'customer',
         phone: '9123456789',
-        address: 'Flat 402, Sunshine Apartments, Gachibowli, Hyderabad'
+        address: 'Flat 402, Sunshine Apartments, Gachibowli, Hyderabad',
+        isVerified: true
       },
       {
         name: 'Annapurna Kitchen',
@@ -44,7 +63,8 @@ const seedData = async () => {
         password: 'password123',
         role: 'kitchen',
         phone: '8765432109',
-        address: 'Kitchen Block 2, Hitech City, Hyderabad'
+        address: 'Kitchen Block 2, Hitech City, Hyderabad',
+        isVerified: true
       },
       {
         name: 'Ramu Express',
@@ -52,7 +72,8 @@ const seedData = async () => {
         password: 'password123',
         role: 'delivery',
         phone: '7654321098',
-        address: 'Delivery Hub A, Madhapur, Hyderabad'
+        address: 'Delivery Hub A, Madhapur, Hyderabad',
+        isVerified: true
       },
       {
         name: 'Super Admin',
@@ -60,7 +81,8 @@ const seedData = async () => {
         password: 'password123',
         role: 'admin',
         phone: '9999999999',
-        address: 'Admin Headquarters, Hyderabad'
+        address: 'Admin Headquarters, Hyderabad',
+        isVerified: true
       }
     ];
 
