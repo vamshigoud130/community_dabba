@@ -4,6 +4,143 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Calendar, ShoppingBag, MapPin, Star, Sparkles, CheckCircle2, AlertCircle, Compass, Truck, MessageSquare } from 'lucide-react';
 
+const getCustomerCoords = (orderId) => {
+  if (!orderId) return { lat: 17.4400, lng: 78.3480 };
+  let hashVal = 0;
+  for (let i = 0; i < orderId.length; i++) {
+    hashVal = orderId.charCodeAt(i) + ((hashVal << 5) - hashVal);
+  }
+  const latOffset = ((hashVal % 100) / 10000) * 2 - 0.01;
+  const lngOffset = (((hashVal >> 8) % 100) / 10000) * 2 - 0.01;
+  return {
+    lat: 17.4483 + latOffset,
+    lng: 78.3741 + lngOffset
+  };
+};
+
+function CustomerTrackMap({ order }) {
+  const mapRef = React.useRef(null);
+  const mapInstance = React.useRef(null);
+  const markerInstance = React.useRef(null);
+  const [coords, setCoords] = React.useState({
+    lat: order.deliveryLocation?.lat || 17.4483,
+    lng: order.deliveryLocation?.lng || 78.3741
+  });
+  
+  const dest = React.useMemo(() => getCustomerCoords(order._id), [order._id]);
+
+  React.useEffect(() => {
+    if (order.status !== 'Out for Delivery') {
+      setCoords({ lat: 17.4483, lng: 78.3741 });
+      return;
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await axios.get(`/orders/${order._id}`);
+        if (res.data.success && res.data.data.deliveryLocation) {
+          setCoords({
+            lat: res.data.data.deliveryLocation.lat,
+            lng: res.data.data.deliveryLocation.lng
+          });
+        }
+      } catch (err) {
+        console.error('Error polling location:', err);
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [order._id, order.status]);
+
+  React.useEffect(() => {
+    if (!window.L || !mapRef.current) return;
+
+    if (mapInstance.current) {
+      mapInstance.current.remove();
+      mapInstance.current = null;
+      markerInstance.current = null;
+    }
+
+    mapInstance.current = window.L.map(mapRef.current).setView([17.4483, 78.3741], 14);
+
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(mapInstance.current);
+
+    window.L.marker([17.4483, 78.3741], {
+      icon: window.L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/1046/1046857.png',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      })
+    }).addTo(mapInstance.current).bindPopup('🍲 Annapurna Kitchen');
+
+    window.L.marker([dest.lat, dest.lng], {
+      icon: window.L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+        iconSize: [30, 30],
+        iconAnchor: [15, 30]
+      })
+    }).addTo(mapInstance.current).bindPopup('👤 Your Delivery Point');
+
+    markerInstance.current = window.L.marker([coords.lat, coords.lng], {
+      icon: window.L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png',
+        iconSize: [35, 35],
+        iconAnchor: [17, 17]
+      })
+    }).addTo(mapInstance.current).bindPopup('🛵 Delivery Partner');
+
+    window.L.polyline([[17.4483, 78.3741], [dest.lat, dest.lng]], {
+      color: '#6366f1',
+      weight: 3,
+      dashArray: '5, 10'
+    }).addTo(mapInstance.current);
+
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
+  }, [dest]);
+
+  React.useEffect(() => {
+    if (markerInstance.current && mapInstance.current) {
+      markerInstance.current.setLatLng([coords.lat, coords.lng]);
+      mapInstance.current.panTo([coords.lat, coords.lng]);
+    }
+  }, [coords]);
+
+  return (
+    <div className="flex flex-col gap-4 w-full">
+      <div ref={mapRef} className="h-72 w-full rounded-3xl border border-slate-200 overflow-hidden shadow-inner relative z-0"></div>
+      
+      <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center justify-between text-xs">
+        <div>
+          <p className="font-extrabold text-slate-800">
+            {order.status === 'Delivered'
+              ? '🎉 Order Delivered!'
+              : order.status === 'Out for Delivery'
+              ? '🛵 Courier is on the way!'
+              : order.status === 'Preparing'
+              ? '🍳 Kitchen is preparing your meals.'
+              : '⏱ Waiting for kitchen acceptance.'}
+          </p>
+          <p className="text-slate-400 font-medium mt-0.5">
+            {order.status === 'Out for Delivery' ? 'Watch coordinates update in real-time above.' : 'Live tracking maps will activate during transit.'}
+          </p>
+        </div>
+        {order.status === 'Out for Delivery' && (
+          <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider animate-pulse">
+            Live Track
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CustomerDashboard() {
   const { user } = useContext(AuthContext);
   const location = useLocation();
@@ -870,34 +1007,8 @@ export default function CustomerDashboard() {
                   })}
                 </div>
 
-                {/* Mock GPS Map Layout */}
-                <div className="relative h-64 rounded-3xl border border-slate-200 overflow-hidden shadow-inner bg-slate-100 flex items-center justify-center">
-                  {/* Grid Lines mockup */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:24px_24px] opacity-60"></div>
-                  
-                  {/* Simulated delivery pathways */}
-                  <div className="relative z-10 flex flex-col items-center text-center gap-4 p-8">
-                    <Compass className="h-12 w-12 text-brand-500 animate-spin" style={{ animationDuration: '6s' }} />
-                    <div>
-                      <p className="font-extrabold text-slate-900 text-sm">Simulated Map Navigation</p>
-                      <p className="text-slate-500 text-xs mt-1">
-                        {selectedOrder.status === 'Delivered'
-                          ? 'Courier Ramu has marked this box as delivered. Bon Appetit!'
-                          : selectedOrder.status === 'Out for Delivery'
-                          ? '🛵 Driver Ramu is driving to Madhapur Hostel blocks (4.5 km away).'
-                          : selectedOrder.status === 'Preparing'
-                          ? '🍳 Cook is currently wrapping packing containers in high hygiene foil.'
-                          : '⏱ Waiting for the Annapurna Kitchen cook to accept cooking task.'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Stepper map overlays */}
-                  <div className="absolute bottom-4 left-4 bg-slate-900/90 text-white px-3.5 py-2 rounded-xl text-[10px] font-bold flex items-center gap-2 border border-slate-800 backdrop-blur-sm">
-                    <Truck className="h-3.5 w-3.5 text-brand-400" />
-                    <span>Courier Assigned: {selectedOrder.deliveryPerson?.name || 'Ramu Express (+91 76543 21098)'}</span>
-                  </div>
-                </div>
+                {/* Interactive Leaflet GPS Map Tracking */}
+                <CustomerTrackMap order={selectedOrder} />
               </div>
             ) : (
               <div className="bg-white rounded-3xl border border-slate-100 shadow-md p-10 text-center py-20 text-slate-400 font-semibold">

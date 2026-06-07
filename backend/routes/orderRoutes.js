@@ -5,7 +5,8 @@ const {
   getOrders,
   getOrderById,
   updateOrderStatus,
-  claimOrder
+  claimOrder,
+  updateOrderLocation
 } = require('../controllers/orderController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
@@ -21,5 +22,8 @@ router.route('/:id/status')
 
 router.route('/:id/claim')
   .put(protect, authorizeRoles('delivery', 'admin'), claimOrder);
+
+router.route('/:id/location')
+  .put(protect, authorizeRoles('delivery', 'admin'), updateOrderLocation);
 
 module.exports = router;

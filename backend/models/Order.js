@@ -65,6 +65,11 @@ const OrderSchema = new mongoose.Schema({
     enum: ['One-Time', 'Subscription'],
     default: 'One-Time'
   },
+  deliveryLocation: {
+    lat: { type: Number, default: 17.4483 },
+    lng: { type: Number, default: 78.3741 },
+    updatedAt: { type: Date, default: Date.now }
+  },
   createdAt: {
     type: Date,
     default: Date.now

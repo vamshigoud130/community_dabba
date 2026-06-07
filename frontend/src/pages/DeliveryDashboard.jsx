@@ -2,6 +2,122 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Truck, Compass, DollarSign, MapPin, CheckCircle, Navigation, Phone, ShieldCheck } from 'lucide-react';
 
+const getCustomerCoords = (orderId) => {
+  if (!orderId) return { lat: 17.4400, lng: 78.3480 };
+  let hashVal = 0;
+  for (let i = 0; i < orderId.length; i++) {
+    hashVal = orderId.charCodeAt(i) + ((hashVal << 5) - hashVal);
+  }
+  const latOffset = ((hashVal % 100) / 10000) * 2 - 0.01;
+  const lngOffset = (((hashVal >> 8) % 100) / 10000) * 2 - 0.01;
+  return {
+    lat: 17.4483 + latOffset,
+    lng: 78.3741 + lngOffset
+  };
+};
+
+function DeliveryRouteMap({ order }) {
+  const mapRef = React.useRef(null);
+  const mapInstance = React.useRef(null);
+  const markerInstance = React.useRef(null);
+  const [coords, setCoords] = React.useState({ lat: 17.4483, lng: 78.3741 });
+  
+  const dest = React.useMemo(() => getCustomerCoords(order._id), [order._id]);
+
+  React.useEffect(() => {
+    if (order.status !== 'Out for Delivery') return;
+
+    let step = 0;
+    const totalSteps = 40;
+    const startLat = order.deliveryLocation?.lat || 17.4483;
+    const startLng = order.deliveryLocation?.lng || 78.3741;
+    
+    setCoords({ lat: startLat, lng: startLng });
+
+    const interval = setInterval(async () => {
+      step++;
+      const ratio = Math.min(step / totalSteps, 1);
+      const nextLat = startLat + (dest.lat - startLat) * ratio;
+      const nextLng = startLng + (dest.lng - startLng) * ratio;
+
+      setCoords({ lat: nextLat, lng: nextLng });
+
+      try {
+        await axios.put(`/orders/${order._id}/location`, { lat: nextLat, lng: nextLng });
+      } catch (err) {
+        console.error('Error updating location:', err);
+      }
+
+      if (ratio >= 1) {
+        clearInterval(interval);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [order._id, order.status, dest]);
+
+  React.useEffect(() => {
+    if (!window.L || !mapRef.current) return;
+
+    if (!mapInstance.current) {
+      mapInstance.current = window.L.map(mapRef.current).setView([17.4483, 78.3741], 14);
+
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(mapInstance.current);
+
+      window.L.marker([17.4483, 78.3741], {
+        icon: window.L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/1046/1046857.png',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        })
+      }).addTo(mapInstance.current).bindPopup('🍲 Annapurna Kitchen');
+
+      window.L.marker([dest.lat, dest.lng], {
+        icon: window.L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+          iconSize: [30, 30],
+          iconAnchor: [15, 30]
+        })
+      }).addTo(mapInstance.current).bindPopup('👤 Dropoff Location');
+
+      markerInstance.current = window.L.marker([coords.lat, coords.lng], {
+        icon: window.L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png',
+          iconSize: [35, 35],
+          iconAnchor: [17, 17]
+        })
+      }).addTo(mapInstance.current).bindPopup('🛵 Your Position');
+      
+      window.L.polyline([[17.4483, 78.3741], [dest.lat, dest.lng]], {
+        color: '#6366f1',
+        weight: 3,
+        dashArray: '5, 10'
+      }).addTo(mapInstance.current);
+    }
+  }, [dest]);
+
+  React.useEffect(() => {
+    if (markerInstance.current && mapInstance.current) {
+      markerInstance.current.setLatLng([coords.lat, coords.lng]);
+      mapInstance.current.panTo([coords.lat, coords.lng]);
+    }
+  }, [coords]);
+
+  return (
+    <div className="flex flex-col gap-2 w-full">
+      <div ref={mapRef} className="h-64 w-full rounded-2xl border border-slate-200 overflow-hidden shadow-inner relative z-0"></div>
+      <div className="flex justify-between items-center text-[10px] text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl font-bold font-mono">
+        <span>Coords: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}</span>
+        <span className="text-indigo-400 uppercase animate-pulse">
+          {order.status === 'Out for Delivery' ? '⚡ Driving...' : 'Cooking...'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function DeliveryDashboard() {
   const [activeTab, setActiveTab] = useState('active'); // active, pool, history
   const [activeOrders, setActiveOrders] = useState([]);
@@ -174,16 +290,10 @@ export default function DeliveryDashboard() {
                       </div>
 
                       {/* Map coordinates simulator and delivery completer */}
-                      <div className="w-full md:w-72 bg-slate-950 text-white rounded-2xl p-6 border border-slate-800 flex flex-col justify-between shadow-inner">
-                        <div className="flex items-center gap-3">
-                          <Compass className="h-8 w-8 text-brand-500 animate-spin" style={{ animationDuration: '8s' }} />
-                          <div>
-                            <p className="text-[10px] text-brand-400 font-black uppercase tracking-wider">GPS Navigator</p>
-                            <p className="font-bold text-xs text-slate-300">Madhapur blocks ➡️ 3.2 Km</p>
-                          </div>
-                        </div>
+                      <div className="w-full md:w-80 bg-slate-950 text-white rounded-2xl p-6 border border-slate-800 flex flex-col justify-between shadow-inner">
+                        <DeliveryRouteMap order={order} />
                         
-                        <div className="my-6 border-t border-slate-800"></div>
+                        <div className="my-4 border-t border-slate-800"></div>
 
                         <button
                           onClick={() => handleMarkDelivered(order._id)}

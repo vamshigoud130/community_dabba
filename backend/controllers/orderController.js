@@ -251,10 +251,50 @@ const claimOrder = async (req, res) => {
   }
 };
 
+// @desc    Update order delivery location coordinates
+// @route   PUT /api/orders/:id/location
+// @access  Private (Delivery, Admin)
+const updateOrderLocation = async (req, res) => {
+  try {
+    const { lat, lng } = req.body;
+    if (lat === undefined || lng === undefined) {
+      return res.status(400).json({ success: false, message: 'Please provide both lat and lng' });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Authorization check: Only assigned driver or admin
+    if (
+      req.user.role === 'delivery' &&
+      order.deliveryPerson &&
+      order.deliveryPerson.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({ success: false, message: 'Not authorized: Order assigned to another delivery agent' });
+    }
+
+    order.deliveryLocation = {
+      lat: Number(lat),
+      lng: Number(lng),
+      updatedAt: new Date()
+    };
+
+    const updatedOrder = await order.save();
+
+    res.json({ success: true, data: updatedOrder });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrders,
   getOrderById,
   updateOrderStatus,
-  claimOrder
+  claimOrder,
+  updateOrderLocation
 };
