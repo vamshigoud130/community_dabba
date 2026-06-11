@@ -50,29 +50,29 @@ export default function Home() {
 
   const subscriptionPlans = [
     {
-      title: 'Breakfast Plan',
-      price: '₹1,500',
-      period: '/month',
-      desc: 'Light & healthy traditional breakfasts (Idli, Dosa, Poha, Paratha) with hot tea options.',
-      features: ['Monday to Friday delivery', 'Pause/skip meal option', 'Veg/Non-Veg choices', 'Free Delivery'],
+      title: 'Daily Plan',
+      price: '₹150',
+      period: '/day',
+      desc: 'Perfect for tasting our kitchen\'s fresh meals. Single day delivery to your doorstep.',
+      features: ['1-Day trial meal box', 'Veg/Non-Veg choices', 'Delivered hot & fresh', 'Free Delivery'],
       color: 'from-orange-400 to-amber-500'
     },
     {
-      title: 'Lunch Plan',
-      price: '₹3,500',
-      period: '/month',
-      desc: 'Heavy home-cooked lunches (Basmati Rice, Roti, Dal, Curry, Salad) for perfect workdays.',
-      features: ['Full 30-day coverage', 'Customizable skip list', 'Delivered hot by 1:00 PM', 'Extra dessert on Fridays'],
-      color: 'from-brand-500 to-brand-600',
-      popular: true
+      title: 'Weekly Plan',
+      price: '₹900',
+      period: '/week',
+      desc: 'Great for testing out our service for a full week. Balanced nutrition and variety.',
+      features: ['Full 7-day coverage', 'Pause/skip meal option', 'Veg/Non-Veg choices', 'Free Delivery'],
+      color: 'from-brand-500 to-brand-600'
     },
     {
-      title: 'Dinner Plan',
-      price: '₹3,000',
+      title: 'Monthly Plan',
+      price: '₹3,500',
       period: '/month',
-      desc: 'Comforting, easily-digestible dinners (Khichdi, Roti Sabzi, Egg Curry) to end your day right.',
-      features: ['Delivered by 8:00 PM', 'Pause anytime you eat out', 'Low oil & spice prep', 'Eco-friendly hot packs'],
-      color: 'from-slate-700 to-slate-900'
+      desc: 'Our best value plan for full month-long convenience. Ideal for working professionals and students.',
+      features: ['Full 30-day coverage', 'Customizable skip list', 'Pause/resume anytime', 'Extra dessert on Fridays'],
+      color: 'from-slate-700 to-slate-900',
+      popular: true
     }
   ];
 
@@ -276,9 +276,9 @@ export default function Home() {
           </div>
           <div className="flex flex-col gap-3">
             <h4 className="font-bold text-sm uppercase text-slate-300">Contact & Support</h4>
-            <p className="text-slate-400 text-sm">📞 Support Line: +91 98765 43210</p>
-            <p className="text-slate-400 text-sm">📧 Email: info@communitydabba.com</p>
-            <p className="text-slate-400 text-sm">📍 Head Office: Hitech City, Hyderabad, IN</p>
+            <p className="text-slate-400 text-sm">📞 Support Line: +91 7981389738</p>
+            <p className="text-slate-400 text-sm">📧 Email: chenagonivamshi@gmail.com</p>
+            <p className="text-slate-400 text-sm">📍 Head Office: Hitech City, Hyderabad,Telangana</p>
           </div>
         </div>
         <div className="max-w-7xl mx-auto border-t border-slate-900 mt-8 pt-8 text-center text-slate-500 text-xs font-semibold">
