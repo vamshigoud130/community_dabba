@@ -82,7 +82,7 @@ export default function Navbar() {
             <Utensils className="h-6 w-6" />
           </div>
           <span className="font-extrabold text-slate-800">
-            Community<span className="text-brand-500">Dabba</span>
+            Dabba<span className="text-brand-500">Hub</span>
           </span>
         </Link>
 

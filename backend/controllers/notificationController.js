@@ -1,8 +1,5 @@
 const Notification = require('../models/Notification');
 
-// @desc    Get unread notifications for the current user's role
-// @route   GET /api/notifications
-// @access  Private
 const getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({
@@ -19,9 +16,6 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// @desc    Mark a notification as read by current user
-// @route   PUT /api/notifications/:id/read
-// @access  Private
 const markNotificationAsRead = async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);

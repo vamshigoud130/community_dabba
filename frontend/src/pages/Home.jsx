@@ -92,7 +92,7 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-slate-600 text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-medium">
-              Community Dabba automates subscriptions, pauses, delivery tracking, and menus for hostels, PG accommodations, and working professionals.
+              DabbaHub automates subscriptions, pauses, delivery tracking, and menus for hostels, PG accommodations, and working professionals.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mt-4">
               <button
@@ -131,7 +131,7 @@ export default function Home() {
       {/* Grid Features */}
       <section className="py-20 px-6 max-w-7xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-950">Why Choose Community Dabba?</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-950">Why Choose DabbaHub?</h2>
           <p className="text-slate-500 font-medium mt-2">Ditch manual notebooks, payment reminders, and missed lunches.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -262,7 +262,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
           <div className="flex flex-col gap-3">
             <h3 className="font-extrabold text-xl">
-              Community<span className="text-brand-500">Dabba</span>
+              Dabba<span className="text-brand-500">Hub</span>
             </h3>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
               Connecting local kitchens, delivery networks, PG communities, and corporate users in a single food-fulfillment application.
@@ -282,7 +282,7 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto border-t border-slate-900 mt-8 pt-8 text-center text-slate-500 text-xs font-semibold">
-          © {new Date().getFullYear()} Community Dabba Service. All rights reserved.
+          © {new Date().getFullYear()} DabbaHub Service. All rights reserved.
         </div>
       </footer>
     </div>

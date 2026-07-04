@@ -7,6 +7,7 @@ export default function KitchenDashboard() {
   const [orders, setOrders] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
+  const [toast, setToast] = useState(null);
   
   // Menu Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -41,6 +42,27 @@ export default function KitchenDashboard() {
     }
   };
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
+
+  const handleMarkSubscriptionReady = async (userId, category) => {
+    try {
+      const res = await axios.post('/orders/subscription-ready', { userId, category });
+      if (res.data.success) {
+        fetchOrdersQueue();
+        fetchSubscriptions();
+        showToast(`Subscription ${category} marked as ready for courier!`, 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Error marking subscription ready', 'error');
+    }
+  };
+
   const fetchOrdersQueue = async () => {
     try {
       const res = await axios.get('/orders?active=true');
@@ -69,10 +91,11 @@ export default function KitchenDashboard() {
       const res = await axios.put(`/orders/${id}/status`, { status: nextStatus });
       if (res.data.success) {
         fetchOrdersQueue();
+        showToast(`Order status updated to: ${nextStatus}`, 'success');
       }
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Error updating order status');
+      showToast(err.response?.data?.message || 'Error updating order status', 'error');
     }
   };
 
@@ -434,6 +457,24 @@ export default function KitchenDashboard() {
                             <p className="line-clamp-2">📍 Address: {sub.userId?.address || 'N/A'}</p>
                             <p className="text-slate-400 mt-1">Expiry: {new Date(sub.endDate).toLocaleDateString()}</p>
                           </div>
+                          
+                          <div className="mt-3 pt-3 border-t border-slate-200">
+                            {sub.dispatchedToday?.[category] ? (
+                              <button
+                                disabled
+                                className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-extrabold py-2.5 rounded-2xl text-[11px] flex items-center justify-center gap-1 cursor-not-allowed"
+                              >
+                                ✔ Ready for Courier
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleMarkSubscriptionReady(sub.userId?._id, category)}
+                                className="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold py-2.5 rounded-2xl text-[11px] transition-all shadow-sm flex items-center justify-center gap-1"
+                              >
+                                ✔ Mark Ready for Courier
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))
                     ) : (
@@ -542,7 +583,7 @@ export default function KitchenDashboard() {
             <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
               <div>
                 <h3 className="font-black text-lg">{editingItem ? '✏ Edit Recipe Card' : '🍳 Launch Recipe Card'}</h3>
-                <p className="text-slate-400 text-xs font-semibold mt-0.5">Community Dabba Kitchen registry</p>
+                <p className="text-slate-400 text-xs font-semibold mt-0.5">DabbaHub Kitchen registry</p>
               </div>
               <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-white font-extrabold text-sm">✕</button>
             </div>
@@ -699,6 +740,17 @@ export default function KitchenDashboard() {
               </button>
             </form>
           </div>
+        </div>
+      )}
+      {/* Toast Notification Overlay */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border transition-all duration-300 transform translate-y-0 ${
+          toast.type === 'success' 
+            ? 'bg-emerald-950 border-emerald-800 text-emerald-300' 
+            : 'bg-rose-950 border-rose-800 text-rose-300'
+        }`}>
+          <span className="text-xs font-extrabold">{toast.message}</span>
+          <button onClick={() => setToast(null)} className="text-xs opacity-60 hover:opacity-100 font-extrabold ml-2">✕</button>
         </div>
       )}
     </div>

@@ -1026,7 +1026,7 @@ export default function CustomerDashboard() {
             <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
               <div>
                 <h3 className="font-black text-lg">💳 Secure Stripe Checkout</h3>
-                <p className="text-slate-400 text-xs font-semibold mt-0.5">Community Dabba Live Gateway</p>
+                <p className="text-slate-400 text-xs font-semibold mt-0.5">DabbaHub Live Gateway</p>
               </div>
               <button
                 onClick={() => setCheckoutOpen(false)}

@@ -80,8 +80,8 @@ const validateEmailDomain = async (email) => {
  * @param {string} htmlContent 
  */
 const sendEmail = async (toEmail, toName, subject, htmlContent) => {
-  const senderEmail = process.env.SENDER_EMAIL || 'noreply@communitydabba.com';
-  const senderName = process.env.SENDER_NAME || 'Community Dabba';
+  const senderEmail = process.env.SENDER_EMAIL || 'noreply@dabbahub.com';
+  const senderName = process.env.SENDER_NAME || 'DabbaHub';
 
   // 1. Try sending via Brevo API if API key is provided
   const brevoApiKey = process.env.BREVO_API_KEY;
@@ -259,15 +259,15 @@ const sendEmail = async (toEmail, toName, subject, htmlContent) => {
  * Sends a login notification email.
  */
 const sendLoginEmail = async (email, name) => {
-  const subject = 'Successful Login Alert - Community Dabba';
+  const subject = 'Successful Login Alert - DabbaHub';
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
       <h2 style="color: #4F46E5; text-align: center;">Security Alert: Successful Login</h2>
       <p>Hello ${name},</p>
-      <p>This is a quick security notification to let you know that you have successfully logged into your <strong>Community Dabba</strong> account.</p>
+      <p>This is a quick security notification to let you know that you have successfully logged into your <strong>DabbaHub</strong> account.</p>
       <p>If this was you, no action is required. If you did not log in or believe this was unauthorized, please change your password immediately.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 12px; color: #666; text-align: center;">This is an automated security message from Community Dabba.</p>
+      <p style="font-size: 12px; color: #666; text-align: center;">This is an automated security message from DabbaHub.</p>
     </div>
   `;
   await sendEmail(email, name, subject, htmlContent);
@@ -290,7 +290,7 @@ const sendOrderPlacedEmail = async (email, name, order) => {
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
       <h2 style="color: #10B981; text-align: center;">Order Confirmed!</h2>
       <p>Hello ${name},</p>
-      <p>Thank you for ordering with Community Dabba! Your order has been placed successfully and is being prepared.</p>
+      <p>Thank you for ordering with DabbaHub! Your order has been placed successfully and is being prepared.</p>
       
       <div style="background-color: #F9FAFB; padding: 15px; border-radius: 6px; margin: 20px 0;">
         <h4 style="margin-top: 0; color: #374151;">Order Summary (ID: #${order._id.toString().slice(-6)})</h4>
@@ -315,7 +315,7 @@ const sendOrderPlacedEmail = async (email, name, order) => {
       <p><strong>Payment Method:</strong> ${order.paymentMethod} (${order.paymentStatus})</p>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 12px; color: #666; text-align: center;">Enjoy your delicious meal! - The Community Dabba Team</p>
+      <p style="font-size: 12px; color: #666; text-align: center;">Enjoy your delicious meal! - The DabbaHub Team</p>
     </div>
   `;
   await sendEmail(email, name, subject, htmlContent);
@@ -336,7 +336,7 @@ const sendSubscriptionEmail = async (email, name, subscription) => {
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
       <h2 style="color: #6366F1; text-align: center;">Subscription Active! 🎉</h2>
       <p>Hello ${name},</p>
-      <p>You have successfully subscribed to the <strong>${subscription.plan} Meal Plan</strong> with Community Dabba!</p>
+      <p>You have successfully subscribed to the <strong>\${subscription.plan} Meal Plan</strong> with DabbaHub!</p>
       
       <div style="background-color: #F5F3FF; padding: 15px; border-radius: 6px; margin: 20px 0;">
         <h4 style="margin-top: 0; color: #5B21B6;">Plan Details</h4>
@@ -349,7 +349,7 @@ const sendSubscriptionEmail = async (email, name, subscription) => {
       <p>Your subscription is now active. You will receive fresh, hygienic meals according to your selection. You can pause or skip days from your customer dashboard whenever you want.</p>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 12px; color: #666; text-align: center;">Welcome to the family! - The Community Dabba Team</p>
+      <p style="font-size: 12px; color: #666; text-align: center;">Welcome to the family! - The DabbaHub Team</p>
     </div>
   `;
   await sendEmail(email, name, subject, htmlContent);
@@ -364,7 +364,7 @@ const sendOutOfDeliveryEmail = async (email, name, orderId) => {
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
       <h2 style="color: #F59E0B; text-align: center;">Out for Delivery!</h2>
       <p>Hello ${name},</p>
-      <p>Great news! Your delicious meal from Community Dabba is out for delivery.</p>
+      <p>Great news! Your delicious meal from DabbaHub is out for delivery.</p>
       <p>Our delivery executive is on the way. Please make sure someone is available at your delivery address to receive it.</p>
       
       <div style="background-color: #FEF3C7; padding: 15px; border-radius: 6px; margin: 20px 0; text-align: center;">
@@ -372,7 +372,7 @@ const sendOutOfDeliveryEmail = async (email, name, orderId) => {
       </div>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 12px; color: #666; text-align: center;">Get ready to enjoy your meal! - The Community Dabba Team</p>
+      <p style="font-size: 12px; color: #666; text-align: center;">Get ready to enjoy your meal! - The DabbaHub Team</p>
     </div>
   `;
   await sendEmail(email, name, subject, htmlContent);
@@ -391,7 +391,7 @@ const sendOrderDeliveredEmail = async (email, name, orderId) => {
       <p>We hope you enjoy your meal! If you have any feedback, please log into your account and submit feedback so we can continue to improve.</p>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 12px; color: #666; text-align: center;">Thank you for dining with us! - The Community Dabba Team</p>
+      <p style="font-size: 12px; color: #666; text-align: center;">Thank you for dining with us! - The DabbaHub Team</p>
     </div>
   `;
   await sendEmail(email, name, subject, htmlContent);
@@ -401,12 +401,12 @@ const sendOrderDeliveredEmail = async (email, name, orderId) => {
  * Sends a registration OTP verification email.
  */
 const sendOTPEmail = async (email, name, otp) => {
-  const subject = 'Verify Your Email Address - Community Dabba';
+  const subject = 'Verify Your Email Address - DabbaHub';
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
       <h2 style="color: #4F46E5; text-align: center;">Verify Your Email</h2>
       <p>Hello ${name},</p>
-      <p>Thank you for signing up with Community Dabba! To complete your registration, please verify your email address by entering the following One-Time Password (OTP):</p>
+      <p>Thank you for signing up with DabbaHub! To complete your registration, please verify your email address by entering the following One-Time Password (OTP):</p>
       
       <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0;">
         <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #4F46E5;">${otp}</span>
@@ -414,7 +414,7 @@ const sendOTPEmail = async (email, name, otp) => {
       
       <p>This code is valid for 10 minutes. If you did not request this code, please ignore this email.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 12px; color: #666; text-align: center;">This is an automated security message from Community Dabba.</p>
+      <p style="font-size: 12px; color: #666; text-align: center;">This is an automated security message from DabbaHub.</p>
     </div>
   `;
   await sendEmail(email, name, subject, htmlContent);

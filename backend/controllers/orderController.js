@@ -2,9 +2,6 @@ const Order = require('../models/Order');
 const Menu = require('../models/Menu');
 const Notification = require('../models/Notification');
 
-// @desc    Create a new order
-// @route   POST /api/orders
-// @access  Private
 const createOrder = async (req, res) => {
   try {
     const { items, paymentMethod, deliveryAddress, phone } = req.body;
@@ -51,7 +48,7 @@ const createOrder = async (req, res) => {
 
     if (paymentMethod !== 'Cash') {
       const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-      const origin = req.body.origin || 'https://community-dabba.onrender.com';
+      const origin = req.body.origin || 'https://dabbahub.onrender.com';
       const lineItems = orderItems.map(item => ({
         price_data: {
           currency: 'inr',
@@ -88,9 +85,77 @@ const createOrder = async (req, res) => {
   }
 };
 
-// @desc    Get user or role-based orders
-// @route   GET /api/orders
-// @access  Private
+const createSubscriptionOrder = async (req, res) => {
+  try {
+    const { userId, category } = req.body;
+
+    if (!userId || !category) {
+      return res.status(400).json({ success: false, message: 'User ID and category are required' });
+    }
+
+    const User = require('../models/User');
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Find the menu item scheduled for today's weekday in this category
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayDay = days[new Date().getDay()];
+
+    let menuItem = await Menu.findOne({
+      category,
+      day: { $in: [todayDay, 'All'] },
+      available: true
+    });
+
+    // Fallback: get any available item in this category if no weekday-specific one is found
+    if (!menuItem) {
+      menuItem = await Menu.findOne({ category, available: true });
+    }
+
+    if (!menuItem) {
+      return res.status(404).json({ success: false, message: `No available menu items found for ${category}` });
+    }
+
+    // Create the subscription order
+    const order = await Order.create({
+      userId,
+      items: [{
+        menuId: menuItem._id,
+        title: menuItem.title,
+        price: 0,
+        quantity: 1
+      }],
+      total: 0,
+      deliveryAddress: user.address || 'Default Address',
+      phone: user.phone || '0000000000',
+      paymentMethod: 'Wallet',
+      paymentStatus: 'Paid',
+      status: 'Out for Delivery', // Set straight to Out for Delivery as requested
+      orderType: 'Subscription'
+    });
+
+    // Create a notification for the delivery person
+    try {
+      await Notification.create({
+        title: 'Subscription Order Ready',
+        message: `Subscription ${category} for ${user.name} is ready for pickup!`,
+        orderId: order._id,
+        recipientRole: 'delivery'
+      });
+    } catch (err) {
+      console.error('Error creating notification:', err);
+    }
+
+    res.status(201).json({ success: true, data: order });
+  } catch (error) {
+    console.error('Create Subscription Order Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 const getOrders = async (req, res) => {
   try {
     let query = {};
@@ -129,9 +194,6 @@ const getOrders = async (req, res) => {
   }
 };
 
-// @desc    Get order by ID
-// @route   GET /api/orders/:id
-// @access  Private
 const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
@@ -217,9 +279,6 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// @desc    Claim order for delivery
-// @route   PUT /api/orders/:id/claim
-// @access  Private (Delivery, Admin)
 const claimOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate('userId', 'name email');
@@ -251,9 +310,6 @@ const claimOrder = async (req, res) => {
   }
 };
 
-// @desc    Update order delivery location coordinates
-// @route   PUT /api/orders/:id/location
-// @access  Private (Delivery, Admin)
 const updateOrderLocation = async (req, res) => {
   try {
     const { lat, lng } = req.body;
@@ -292,6 +348,7 @@ const updateOrderLocation = async (req, res) => {
 
 module.exports = {
   createOrder,
+  createSubscriptionOrder,
   getOrders,
   getOrderById,
   updateOrderStatus,

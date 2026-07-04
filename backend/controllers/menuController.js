@@ -24,9 +24,6 @@ const uploadToCloudinary = (fileBuffer, folder = 'community_dabba/dishes') => {
   });
 };
 
-// @desc    Get all menu items
-// @route   GET /api/menu
-// @access  Public
 const getMenuItems = async (req, res) => {
   try {
     const { category, day, type, available } = req.query;
@@ -44,9 +41,6 @@ const getMenuItems = async (req, res) => {
   }
 };
 
-// @desc    Get single menu item
-// @route   GET /api/menu/:id
-// @access  Public
 const getMenuItemById = async (req, res) => {
   try {
     const menuItem = await Menu.findById(req.params.id);
@@ -59,9 +53,6 @@ const getMenuItemById = async (req, res) => {
   }
 };
 
-// @desc    Create menu item
-// @route   POST /api/menu
-// @access  Private (Kitchen, Admin)
 const createMenuItem = async (req, res) => {
   try {
     const { title, description, price, category, day, type, available, image } = req.body;
@@ -96,9 +87,6 @@ const createMenuItem = async (req, res) => {
   }
 };
 
-// @desc    Update menu item
-// @route   PUT /api/menu/:id
-// @access  Private (Kitchen, Admin)
 const updateMenuItem = async (req, res) => {
   try {
     let menuItem = await Menu.findById(req.params.id);
@@ -139,9 +127,6 @@ const updateMenuItem = async (req, res) => {
   }
 };
 
-// @desc    Delete menu item
-// @route   DELETE /api/menu/:id
-// @access  Private (Kitchen, Admin)
 const deleteMenuItem = async (req, res) => {
   try {
     const menuItem = await Menu.findById(req.params.id);

@@ -10,8 +10,8 @@ const app = express();
 
 // Middleware
 const allowedOrigins = [
-  'https://community-dabba.vercel.app',
-  'https://community-dabba.onrender.com',
+  'https://dabbahub.vercel.app',
+  'https://dabbahub.onrender.com',
   'http://localhost:5173',
   'http://localhost:5000'
 ];
@@ -55,7 +55,7 @@ app.use('/api/payments', paymentRoutes);
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Welcome to the Community Dabba Service Manager API!',
+    message: 'Welcome to the DabbaHub Service Manager API!',
     version: '1.0.0'
   });
 });

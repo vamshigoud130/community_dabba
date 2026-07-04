@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   createOrder,
+  createSubscriptionOrder,
   getOrders,
   getOrderById,
   updateOrderStatus,
@@ -9,6 +10,9 @@ const {
   updateOrderLocation
 } = require('../controllers/orderController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
+
+router.route('/subscription-ready')
+  .post(protect, authorizeRoles('kitchen', 'admin'), createSubscriptionOrder);
 
 router.route('/')
   .post(protect, createOrder)

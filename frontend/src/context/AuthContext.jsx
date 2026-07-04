@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
         return 'http://localhost:5000/api';
       }
     }
-    return 'https://community-dabba.onrender.com/api';
+    return 'https://dabbahub.onrender.com/api';
   };
 
   axios.defaults.baseURL = getBaseURL();

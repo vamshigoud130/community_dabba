@@ -3,9 +3,6 @@ const Order = require('../models/Order');
 const Subscription = require('../models/Subscription');
 const Feedback = require('../models/Feedback');
 
-// @desc    Get dashboard analytics
-// @route   GET /api/admin/stats
-// @access  Private (Admin)
 const getAdminStats = async (req, res) => {
   try {
     // 1. Core aggregates
@@ -97,9 +94,6 @@ const getAdminStats = async (req, res) => {
   }
 };
 
-// @desc    Get all users list
-// @route   GET /api/admin/users
-// @access  Private (Admin)
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password').sort({ createdAt: -1 });
@@ -109,9 +103,6 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// @desc    Update user details/role by admin
-// @route   PUT /api/admin/users/:id
-// @access  Private (Admin)
 const adminUpdateUser = async (req, res) => {
   try {
     const { name, email, role, phone, address } = req.body;
@@ -134,9 +125,6 @@ const adminUpdateUser = async (req, res) => {
   }
 };
 
-// @desc    Delete user
-// @route   DELETE /api/admin/users/:id
-// @access  Private (Admin)
 const adminDeleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

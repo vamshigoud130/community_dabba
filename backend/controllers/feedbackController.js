@@ -1,8 +1,5 @@
 const Feedback = require('../models/Feedback');
 
-// @desc    Create new feedback / review
-// @route   POST /api/feedback
-// @access  Private
 const createFeedback = async (req, res) => {
   try {
     const { orderId, foodRating, deliveryRating, comment } = req.body;
@@ -25,9 +22,6 @@ const createFeedback = async (req, res) => {
   }
 };
 
-// @desc    Get all feedbacks
-// @route   GET /api/feedback
-// @access  Public
 const getFeedbacks = async (req, res) => {
   try {
     const feedbacks = await Feedback.find()

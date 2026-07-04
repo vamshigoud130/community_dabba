@@ -1,8 +1,5 @@
 const Subscription = require('../models/Subscription');
 
-// @desc    Create a new meal subscription
-// @route   POST /api/subscriptions
-// @access  Private
 const createSubscription = async (req, res) => {
   try {
     const { plan, mealTypes, pricePaid } = req.body;
@@ -39,7 +36,7 @@ const createSubscription = async (req, res) => {
     });
 
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const origin = req.body.origin || 'https://community-dabba.onrender.com';
+    const origin = req.body.origin || 'https://dabbahub.onrender.com';
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -69,9 +66,6 @@ const createSubscription = async (req, res) => {
   }
 };
 
-// @desc    Get current user active subscription
-// @route   GET /api/subscriptions/my
-// @access  Private
 const getMySubscription = async (req, res) => {
   try {
     const subscription = await Subscription.findOne({
@@ -85,9 +79,6 @@ const getMySubscription = async (req, res) => {
   }
 };
 
-// @desc    Toggle Pause/Resume Subscription
-// @route   PUT /api/subscriptions/:id/pause
-// @access  Private
 const togglePauseSubscription = async (req, res) => {
   try {
     const subscription = await Subscription.findById(req.params.id);
@@ -115,9 +106,9 @@ const togglePauseSubscription = async (req, res) => {
   }
 };
 
-// @desc    Skip specific meal date
-// @route   PUT /api/subscriptions/:id/skip
-// @access  Private
+//   Skip specific meal date
+//    PUT /api/subscriptions/:id/skip
+// Private
 const skipSubscriptionDate = async (req, res) => {
   try {
     const { skipDate } = req.body; // e.g. "2026-05-21"
@@ -155,16 +146,55 @@ const skipSubscriptionDate = async (req, res) => {
   }
 };
 
-// @desc    Get all subscriptions
-// @route   GET /api/subscriptions
-// @access  Private (Admin)
 const getAllSubscriptions = async (req, res) => {
   try {
     const subscriptions = await Subscription.find()
       .populate('userId', 'name email phone')
       .sort({ createdAt: -1 });
 
-    res.json({ success: true, count: subscriptions.length, data: subscriptions });
+    // Find all subscription orders created in the last 24 hours
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const Order = require('../models/Order');
+    const Menu = require('../models/Menu');
+    
+    const todayOrders = await Order.find({
+      orderType: 'Subscription',
+      createdAt: { $gte: oneDayAgo }
+    }).populate('items.menuId', 'category');
+
+    const allMenuItems = await Menu.find({}, 'title category');
+
+    const subscriptionsWithStatus = subscriptions.map(sub => {
+      if (!sub.userId) return null;
+      
+      const subObj = sub.toObject();
+      
+      subObj.dispatchedToday = {
+        Breakfast: false,
+        Lunch: false,
+        Dinner: false
+      };
+
+      todayOrders.forEach(order => {
+        if (order.userId && order.userId.toString() === sub.userId._id.toString()) {
+          order.items.forEach(item => {
+            let category = item.menuId?.category;
+            if (!category) {
+              const matchedMenu = allMenuItems.find(m => m.title === item.title);
+              category = matchedMenu?.category;
+            }
+            if (category) {
+              subObj.dispatchedToday[category] = true;
+            }
+          });
+        }
+      });
+
+      return subObj;
+    }).filter(Boolean);
+
+    res.json({ success: true, count: subscriptionsWithStatus.length, data: subscriptionsWithStatus });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -219,7 +219,7 @@ export default function LoginRegister() {
           {/* Headline */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-black text-slate-950">
-              {isLoginTab ? 'Welcome Back!' : 'Join Community Dabba'}
+              {isLoginTab ? 'Welcome Back!' : 'Join DabbaHub'}
             </h2>
             <p className="text-slate-500 text-sm mt-1">
               {isLoginTab ? 'Please sign in to order your fresh daily meal.' : 'Register to subscribe or join our team.'}

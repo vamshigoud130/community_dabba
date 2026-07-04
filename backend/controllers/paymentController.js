@@ -2,9 +2,6 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Order = require('../models/Order');
 const Subscription = require('../models/Subscription');
 
-// @desc    Verify Stripe Checkout Session
-// @route   POST /api/payments/verify
-// @access  Private
 const verifySession = async (req, res) => {
   try {
     const { session_id, type, id } = req.body;
