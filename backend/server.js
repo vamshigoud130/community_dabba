@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+// ── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   'https://community-dabba.vercel.app',
   'https://dabbahub.vercel.app',
@@ -17,25 +17,25 @@ const allowedOrigins = [
   'http://localhost:5000'
 ];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, Postman, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS policy: origin ${origin} not allowed`), false);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
+// Raw CORS middleware — runs before everything else, handles OPTIONS preflight
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (!origin || allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
-// Handle preflight OPTIONS requests for all routes
-app.options('*', cors(corsOptions));
+  // End preflight immediately
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
 
-app.use(cors(corsOptions));
 app.use(express.json());
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Routes Imports
 const authRoutes = require('./routes/authRoutes');
