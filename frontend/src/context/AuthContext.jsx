@@ -8,25 +8,10 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [loading, setLoading] = useState(true);
 
-  // Configure global API base URL robustly for local development, local IPs, and production
-  const getBaseURL = () => {
-    if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      if (
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.') ||
-        hostname.startsWith('172.') ||
-        hostname === ''
-      ) {
-        return 'http://localhost:5000/api';
-      }
-    }
-    return 'https://dabbahub.onrender.com/api';
-  };
+  // Always use a relative base URL — Vercel proxy forwards /api/* to Render in prod,
+  // and Vite dev server proxy handles /api/* locally.
+  axios.defaults.baseURL = '/api';
 
-  axios.defaults.baseURL = getBaseURL();
 
   useEffect(() => {
     if (token) {
