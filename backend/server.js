@@ -10,25 +10,31 @@ const app = express();
 
 // Middleware
 const allowedOrigins = [
+  'https://community-dabba.vercel.app',
   'https://dabbahub.vercel.app',
   'https://community-dabba.onrender.com',
   'http://localhost:5173',
   'http://localhost:5000'
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
+    // Allow requests with no origin (mobile apps, curl, Postman, etc.)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(null, true); // Allow all for now; tighten later if needed
+    return callback(new Error(`CORS policy: origin ${origin} not allowed`), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+// Handle preflight OPTIONS requests for all routes
+app.options('*', cors(corsOptions));
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes Imports
