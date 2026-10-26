@@ -8,9 +8,9 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [loading, setLoading] = useState(true);
 
-  // Always use a relative base URL — Vercel proxy forwards /api/* to Render in prod,
-  // and Vite dev server proxy handles /api/* locally.
-  axios.defaults.baseURL = '/api';
+  // In production: VITE_API_URL = https://dabbahub.onrender.com/api (from .env.production)
+  // In local dev: falls back to /api (proxied by Vite to localhost:5000)
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/api';
 
 
   useEffect(() => {
