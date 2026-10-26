@@ -1,0 +1,150 @@
+====================================================
+  COMMUNITY DABBA MANAGER - PROJECT INFO
+====================================================
+
+Project Name   : Community Dabba Manager
+Type           : Full-Stack Web Application
+Architecture   : MERN Stack (MongoDB, Express, React, Node.js)
+
+----------------------------------------------------
+  PROJECT STRUCTURE
+----------------------------------------------------
+
+Community_Dabba_manager/
+|-- backend/                  # Node.js + Express REST API
+|   |-- config/               # DB and environment config
+|   |-- controllers/          # Route controller logic
+|   |-- middleware/           # Auth and other middleware
+|   |-- models/               # Mongoose data models
+|   |-- routes/               # API route definitions
+|   |-- seed.js               # Database seeding script
+|   |-- server.js             # Entry point for backend
+|   |-- .env                  # Environment variables
+|   +-- package.json
+|
+|-- frontend/                 # React + Vite SPA
+|   |-- public/               # Static assets
+|   |-- src/
+|   |   +-- pages/            # React page components
+|   |-- index.html
+|   |-- vite.config.js
+|   |-- tailwind.config.js
+|   +-- package.json
+|
+|-- README.md
+|-- package-lock.json
++-- project_info.txt          <- this file
+
+----------------------------------------------------
+  TECH STACK
+----------------------------------------------------
+
+Frontend:
+  - React 19
+  - React Router DOM 7
+  - Axios (HTTP client)
+  - Recharts (data visualization)
+  - Lucide React (icons)
+  - Tailwind CSS 3
+  - Vite 8 (build tool)
+
+Backend:
+  - Node.js (CommonJS)
+  - Express 5
+  - Mongoose 9 (MongoDB ODM)
+  - JSON Web Token (JWT auth)
+  - bcryptjs (password hashing)
+  - Nodemailer (email service)
+  - Multer (file uploads)
+  - Cloudinary (cloud image storage)
+  - Stripe (payments)
+  - dotenv (env management)
+  - CORS
+
+Dev Tools:
+  - Nodemon (backend hot-reload)
+  - ESLint (frontend linting)
+  - Vercel (frontend deployment)
+
+----------------------------------------------------
+  BACKEND DEPENDENCIES
+----------------------------------------------------
+
+  bcryptjs      ^3.0.3
+  cloudinary    ^2.10.0
+  cors          ^2.8.6
+  dotenv        ^17.4.2
+  express       ^5.2.1
+  jsonwebtoken  ^9.0.3
+  mongoose      ^9.6.2
+  multer        ^2.1.1
+  nodemailer    ^8.0.10
+  stripe        ^22.2.0
+
+  devDependencies:
+  nodemon       ^3.1.14
+
+----------------------------------------------------
+  FRONTEND DEPENDENCIES
+----------------------------------------------------
+
+  axios             ^1.16.1
+  lucide-react      ^1.16.0
+  react             ^19.2.6
+  react-dom         ^19.2.6
+  react-router-dom  ^7.15.1
+  recharts          ^3.8.1
+
+  devDependencies:
+  vite              ^8.0.12
+  tailwindcss       ^3.4.19
+  @vitejs/plugin-react ^6.0.1
+  eslint            ^10.3.0
+  autoprefixer      ^10.5.0
+  postcss           ^8.5.15
+
+----------------------------------------------------
+  SETUP INSTRUCTIONS
+----------------------------------------------------
+
+1. Clone the repository
+
+2. Backend setup:
+   cd backend
+   npm install
+   # Configure your .env file (see ENV VARIABLES below)
+   npm start                  # Production
+   npx nodemon server.js      # Development (hot-reload)
+
+3. Frontend setup:
+   cd frontend
+   npm install
+   npm run dev                # Development server
+   npm run build              # Production build
+
+----------------------------------------------------
+  ENVIRONMENT VARIABLES REQUIRED (.env)
+----------------------------------------------------
+
+  MONGO_URI          - MongoDB connection string
+  JWT_SECRET         - Secret key for JWT tokens
+  PORT               - Backend server port
+  CLOUDINARY_NAME    - Cloudinary cloud name
+  CLOUDINARY_API_KEY - Cloudinary API key
+  CLOUDINARY_SECRET  - Cloudinary API secret
+  STRIPE_SECRET_KEY  - Stripe secret key
+  EMAIL_USER         - Email address (Nodemailer)
+  EMAIL_PASS         - Email password / app password
+
+----------------------------------------------------
+  NOTES
+----------------------------------------------------
+
+  - Frontend is configured for Vercel deployment (vercel.json)
+  - Backend uses CommonJS module system
+  - Frontend uses ES Modules (type: "module")
+  - Database seeding available via: node backend/seed.js
+
+====================================================
+  Last Updated: October 2026
+====================================================
