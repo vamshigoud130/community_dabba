@@ -100,7 +100,7 @@ const seedData = async () => {
 
     // 2. Create Menu Items
     const menuItems = [
-      // Breakfast
+      // ── BREAKFAST ────────────────────────────────────────────────────────────
       {
         title: 'Butter Idli Sambar (4 Pcs)',
         description: 'Steaming hot rice cakes served with flavor-rich lentil sambar and fresh coconut chutney.',
@@ -122,7 +122,7 @@ const seedData = async () => {
         image: 'https://images.unsplash.com/photo-1601050690597-df056fb4ce78?w=400&q=80'
       },
       {
-        title: 'Spicy Egg Bread Omlette',
+        title: 'Spicy Egg Bread Omelette',
         description: 'Two eggs whisked with onions, green chilies, coriander, toasted with white bread.',
         price: 70,
         category: 'Breakfast',
@@ -151,8 +151,28 @@ const seedData = async () => {
         available: true,
         image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&q=80'
       },
+      {
+        title: 'Masala Dosa with Chutney',
+        description: 'Crispy golden rice-lentil crepe stuffed with spiced potato filling, served with tomato and coconut chutneys.',
+        price: 70,
+        category: 'Breakfast',
+        day: 'Saturday',
+        type: 'Veg',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=400&q=80'
+      },
+      {
+        title: 'Paneer Bhurji Paratha',
+        description: 'Scrambled spiced cottage cheese sautéed with onions and peppers, served with two whole-wheat parathas.',
+        price: 80,
+        category: 'Breakfast',
+        day: 'Sunday',
+        type: 'Veg',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&q=80'
+      },
 
-      // Lunch
+      // ── LUNCH ────────────────────────────────────────────────────────────────
       {
         title: 'Standard Rice + Dal + Veg Curry',
         description: 'Daily home-style comfort meal with steamed basmati rice, yellow tur dal, and seasonal mixed veg sabzi.',
@@ -203,8 +223,28 @@ const seedData = async () => {
         available: true,
         image: 'https://images.unsplash.com/photo-1626132647523-66f5bf380027?w=400&q=80'
       },
+      {
+        title: 'Veg Thali (7 Items)',
+        description: 'Weekend special — rice, 2 rotis, dal makhani, mix veg sabzi, raita, papad, and sweet gulab jamun.',
+        price: 180,
+        category: 'Lunch',
+        day: 'Saturday',
+        type: 'Veg',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'
+      },
+      {
+        title: 'Sunday Special Mutton Curry + Rice',
+        description: 'Slow-cooked tender mutton pieces in a dark, rich masala gravy, served with steamed white rice and salad.',
+        price: 220,
+        category: 'Lunch',
+        day: 'Sunday',
+        type: 'Non-Veg',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80'
+      },
 
-      // Dinner
+      // ── DINNER ───────────────────────────────────────────────────────────────
       {
         title: 'Roti + Yellow Dal Tadka',
         description: 'Tawa rotis paired with creamy yellow split lentils tempered with garlic, cumin, and red chilies.',
@@ -247,13 +287,33 @@ const seedData = async () => {
       },
       {
         title: 'Butter Chicken + Garlicky Naan',
-        description: 'Rich, sweet, and mild butter tomato gravy with grilled chicken chunks, with garlic flatbread.',
+        description: 'Rich, sweet, and mild butter tomato gravy with grilled chicken chunks, served with garlic flatbread.',
         price: 190,
         category: 'Dinner',
         day: 'Friday',
         type: 'Non-Veg',
         available: true,
         image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80'
+      },
+      {
+        title: 'Palak Paneer + Jeera Rice',
+        description: 'Blanched spinach gravy with soft paneer cubes, paired with aromatic cumin-tempered basmati rice.',
+        price: 150,
+        category: 'Dinner',
+        day: 'Saturday',
+        type: 'Veg',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&q=80'
+      },
+      {
+        title: 'Chicken Fried Rice + Manchurian',
+        description: 'Wok-tossed fragrant rice with shredded chicken and veggies, paired with crispy chilli chicken Manchurian.',
+        price: 170,
+        category: 'Dinner',
+        day: 'Sunday',
+        type: 'Non-Veg',
+        available: true,
+        image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&q=80'
       }
     ];
 
