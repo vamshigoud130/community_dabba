@@ -31,8 +31,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-// Handle preflight for ALL routes, then apply CORS to all responses
-app.options('*', cors(corsOptions));
+// Apply CORS to all responses (cors() handles OPTIONS preflight automatically)
 app.use(cors(corsOptions));
 
 app.use(express.json());
