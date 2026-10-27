@@ -1,4 +1,5 @@
-﻿const mongoose = require('mongoose');
+require('dotenv').config();
+const mongoose = require('mongoose');
 const User = require('./models/User');
 const Menu = require('./models/Menu');
 const Order = require('./models/Order');
