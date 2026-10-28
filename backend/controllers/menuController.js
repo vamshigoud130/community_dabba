@@ -26,13 +26,22 @@ const uploadToCloudinary = (fileBuffer, folder = 'community_dabba/dishes') => {
 
 const getMenuItems = async (req, res) => {
   try {
-    const { category, day, type, available } = req.query;
+    const { category, day, type, available, search } = req.query;
     let query = {};
 
-    if (category) query.category = category;
-    if (day) query.day = { $in: [day, 'All'] };
-    if (type) query.type = type;
-    if (available) query.available = available === 'true';
+    if (category && category !== 'All') query.category = category;
+    if (day && day !== 'All') query.day = { $in: [day, 'All'] };
+    if (type && type !== 'All') query.type = type;
+    if (available !== undefined && available !== '') query.available = available === 'true';
+
+    if (search && search.trim()) {
+      const sanitized = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [
+        { title: { $regex: sanitized, $options: 'i' } },
+        { description: { $regex: sanitized, $options: 'i' } },
+        { category: { $regex: sanitized, $options: 'i' } }
+      ];
+    }
 
     const menuItems = await Menu.find(query).sort({ createdAt: -1 });
     res.json({ success: true, count: menuItems.length, data: menuItems });

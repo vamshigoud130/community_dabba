@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Calendar, ShoppingBag, MapPin, Star, Sparkles, CheckCircle2, AlertCircle, Compass, Truck, MessageSquare } from 'lucide-react';
+import { Calendar, ShoppingBag, MapPin, Star, Sparkles, CheckCircle2, AlertCircle, Compass, Truck, MessageSquare, Search, X, Utensils } from 'lucide-react';
 
 const getCustomerCoords = (orderId) => {
   if (!orderId) return { lat: 17.4400, lng: 78.3480 };
@@ -149,8 +149,9 @@ export default function CustomerDashboard() {
   // Menu/Ordering states
   const [menuItems, setMenuItems] = useState([]);
   const [allMenuItems, setAllMenuItems] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('Lunch');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState({});
   const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -179,11 +180,17 @@ export default function CustomerDashboard() {
   const [errorMsg, setErrorMsg] = useState('');
   
   useEffect(() => {
-    fetchMenu();
     fetchSubscription();
     fetchOrders();
     fetchAllMenuItems();
-  }, [selectedCategory, selectedType]);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchMenu();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [selectedCategory, selectedType, searchQuery]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -222,10 +229,18 @@ export default function CustomerDashboard() {
 
   const fetchMenu = async () => {
     try {
-      let url = `/menu?category=${selectedCategory}`;
-      if (selectedType !== 'All') {
-        url += `&type=${selectedType}`;
+      const params = new URLSearchParams();
+      if (selectedCategory && selectedCategory !== 'All') {
+        params.append('category', selectedCategory);
       }
+      if (selectedType && selectedType !== 'All') {
+        params.append('type', selectedType);
+      }
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
+      }
+      const queryString = params.toString();
+      const url = queryString ? `/menu?${queryString}` : '/menu';
       const res = await axios.get(url);
       if (res.data.success) {
         setMenuItems(res.data.data);
@@ -286,7 +301,7 @@ export default function CustomerDashboard() {
 
   const getCartTotal = () => {
     return Object.entries(cart).reduce((sum, [id, qty]) => {
-      const item = menuItems.find(m => m._id === id);
+      const item = allMenuItems.find(m => m._id === id) || menuItems.find(m => m._id === id);
       return sum + (item ? item.price * qty : 0);
     }, 0);
   };
@@ -479,101 +494,174 @@ export default function CustomerDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Menu Panel */}
           <div className="lg:col-span-2">
-            {/* Filter Widgets */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <div className="flex gap-2">
-                {['Breakfast', 'Lunch', 'Dinner'].map(cat => (
+            {/* Search and Filters Header */}
+            <div className="flex flex-col gap-4 mb-6">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search dishes (e.g. Biryani, Paratha, Sambar, Paneer, Thali)..."
+                  className="w-full pl-12 pr-11 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 shadow-sm transition-all"
+                />
+                {searchQuery && (
                   <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                      selectedCategory === cat
-                        ? 'bg-slate-900 text-white shadow-md'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                    }`}
+                    onClick={() => setSearchQuery('')}
+                    title="Clear search"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
                   >
-                    {cat}
+                    <X className="h-4 w-4" />
                   </button>
-                ))}
+                )}
               </div>
-              <div className="flex gap-2">
-                {['All', 'Veg', 'Non-Veg'].map(type => (
+
+              {/* Filter Widgets */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex gap-2 flex-wrap items-center">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Meal:</span>
+                  {['All', 'Breakfast', 'Lunch', 'Dinner'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                        selectedCategory === cat
+                          ? 'bg-slate-900 text-white shadow-md'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 flex-wrap items-center">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Diet:</span>
+                  {['All', 'Veg', 'Non-Veg'].map(type => (
+                    <button
+                      key={type}
+                      onClick={() => setSelectedType(type)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                        selectedType === type
+                          ? 'border-brand-500 text-brand-600 bg-brand-50'
+                          : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Active Search Filter Badge */}
+              {searchQuery && (
+                <div className="flex items-center justify-between bg-brand-50 border border-brand-100 px-4 py-2.5 rounded-2xl text-xs text-brand-800 animate-fadeIn">
+                  <div className="flex items-center gap-2">
+                    <Search className="h-3.5 w-3.5 text-brand-600" />
+                    <span>
+                      Showing results for <span className="font-extrabold text-brand-900">"{searchQuery}"</span>
+                      <span className="text-brand-600 ml-1.5 font-medium">({menuItems.length} {menuItems.length === 1 ? 'dish' : 'dishes'} found)</span>
+                    </span>
+                  </div>
                   <button
-                    key={type}
-                    onClick={() => setSelectedType(type)}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                      selectedType === type
-                        ? 'border-brand-500 text-brand-600 bg-brand-50'
-                        : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'
-                    }`}
+                    onClick={() => setSearchQuery('')}
+                    className="font-bold underline text-brand-700 hover:text-brand-900 ml-2"
                   >
-                    {type}
+                    Clear search
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
 
-            {/* Menu Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {menuItems.map(item => (
-                <div key={item._id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
-                  <div className="relative h-44 bg-slate-100 overflow-hidden">
-                    <img
-                      src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-4 left-4 flex gap-2">
-                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
-                        item.type === 'Veg' ? 'bg-green-600' : 'bg-rose-600'
-                      }`}>
-                        {item.type}
-                      </span>
-                      <span className="bg-slate-900/80 backdrop-blur-sm text-white px-2 py-1 rounded-lg text-[10px] font-extrabold uppercase">
-                        {item.category}
-                      </span>
+            {/* Menu Grid / Empty State */}
+            {menuItems.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center flex flex-col items-center justify-center gap-3 shadow-sm">
+                <div className="h-16 w-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center">
+                  <Search className="h-8 w-8" />
+                </div>
+                <h4 className="text-base font-extrabold text-slate-800">
+                  {searchQuery ? `No dishes found matching "${searchQuery}"` : 'No dishes found'}
+                </h4>
+                <p className="text-xs text-slate-400 max-w-sm">
+                  {searchQuery
+                    ? 'Try checking for typos or searching with different keywords like dish name or category.'
+                    : 'There are no dishes matching your selected filters at this time.'}
+                </p>
+                {(searchQuery || selectedCategory !== 'All' || selectedType !== 'All') && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('All');
+                      setSelectedType('All');
+                    }}
+                    className="mt-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+                  >
+                    Reset Search & Filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {menuItems.map(item => (
+                  <div key={item._id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+                    <div className="relative h-44 bg-slate-100 overflow-hidden">
+                      <img
+                        src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-4 left-4 flex gap-2">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
+                          item.type === 'Veg' ? 'bg-green-600' : 'bg-rose-600'
+                        }`}>
+                          {item.type}
+                        </span>
+                        <span className="bg-slate-900/80 backdrop-blur-sm text-white px-2 py-1 rounded-lg text-[10px] font-extrabold uppercase">
+                          {item.category}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="font-extrabold text-lg text-slate-900">{item.title}</h3>
-                    <p className="text-slate-400 text-xs mt-1 leading-relaxed line-clamp-2">{item.description}</p>
-                    <div className="flex items-center justify-between mt-6">
-                      <span className="text-2xl font-black text-slate-900">₹{item.price}</span>
-                      
-                      {cart[item._id] ? (
-                        <div className="flex items-center gap-3 bg-brand-50 border border-brand-100 px-3 py-1.5 rounded-xl shadow-sm">
-                          <button
-                            onClick={() => updateCartQty(item._id, -1)}
-                            className="text-brand-700 font-bold hover:scale-110 transition-transform"
-                          >
-                            -
-                          </button>
-                          <span className="text-sm font-black text-brand-700">{cart[item._id]}</span>
+                    <div className="p-6">
+                      <h3 className="font-extrabold text-lg text-slate-900">{item.title}</h3>
+                      <p className="text-slate-400 text-xs mt-1 leading-relaxed line-clamp-2">{item.description}</p>
+                      <div className="flex items-center justify-between mt-6">
+                        <span className="text-2xl font-black text-slate-900">₹{item.price}</span>
+                        
+                        {cart[item._id] ? (
+                          <div className="flex items-center gap-3 bg-brand-50 border border-brand-100 px-3 py-1.5 rounded-xl shadow-sm">
+                            <button
+                              onClick={() => updateCartQty(item._id, -1)}
+                              className="text-brand-700 font-bold hover:scale-110 transition-transform"
+                            >
+                              -
+                            </button>
+                            <span className="text-sm font-black text-brand-700">{cart[item._id]}</span>
+                            <button
+                              onClick={() => updateCartQty(item._id, 1)}
+                              className="text-brand-700 font-bold hover:scale-110 transition-transform"
+                            >
+                              +
+                            </button>
+                          </div>
+                        ) : (
                           <button
                             onClick={() => updateCartQty(item._id, 1)}
-                            className="text-brand-700 font-bold hover:scale-110 transition-transform"
+                            disabled={!item.available}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                              item.available
+                                ? 'bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/10 hover:shadow-brand-500/20 hover:-translate-y-0.5'
+                                : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                            }`}
                           >
-                            +
+                            {item.available ? 'Add To Basket' : 'Sold Out'}
                           </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => updateCartQty(item._id, 1)}
-                          disabled={!item.available}
-                          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                            item.available
-                              ? 'bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/10 hover:shadow-brand-500/20 hover:-translate-y-0.5'
-                              : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
-                          }`}
-                        >
-                          {item.available ? 'Add To Basket' : 'Sold Out'}
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Cart Sidebar */}
@@ -593,7 +681,7 @@ export default function CustomerDashboard() {
               <>
                 <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1">
                   {Object.entries(cart).map(([id, qty]) => {
-                    const item = menuItems.find(m => m._id === id);
+                    const item = allMenuItems.find(m => m._id === id) || menuItems.find(m => m._id === id);
                     if (!item) return null;
                     return (
                       <div key={id} className="flex justify-between items-center gap-2">
